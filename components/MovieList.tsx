@@ -58,12 +58,14 @@ const MovieList: React.FC<MovieListProps> = ({ data, title, horizontal }) => {
               <>
                 <button 
                   onClick={() => handleScroll('left')}
+                  title='previous'
                   className=" max-md:hidden absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2 hover:bg-black/90 transition z-50"
                 >
                   <ChevronLeftIcon className="w-6 h-6 text-white" />
                 </button>
                 <button 
                   onClick={() => handleScroll('right')}
+                  title='next'
                   className={`max-md:hidden absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-2 hover:bg-black/90 transition z-50 ${
                     scrollPosition >= (listRef.current?.scrollWidth || 0) - (listRef.current?.clientWidth || 0) 
                       ? 'opacity-0' 
