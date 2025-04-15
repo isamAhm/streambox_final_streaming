@@ -40,16 +40,21 @@ const Auth = () => {
 
   const login = useCallback(async () => {
     try {
-      await signIn('credentials', {
+      const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-        callbackUrl: '/profiles'
+        callbackUrl: '/profiles',
       });
 
-      router.push('/profiles');
+      if (result?.error) {
+        console.error('Login failed:', result.error);
+        alert('Invalid credentials');
+      } else {
+        router.push('/profiles');
+      }
     } catch (error) {
-      console.log(error);
+      console.error('Unexpected error during login:', error);
     }
   }, [email, password, router]);
 
