@@ -56,6 +56,7 @@ const Auth = () => {
     } catch (error) {
       console.error('Unexpected error during login:', error);
     }
+    console.log('Logined in successfully');
   }, [email, password, router]);
 
   const register = useCallback(async () => {
