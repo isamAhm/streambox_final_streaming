@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
 import { FadeIn } from "./animated-elements";
@@ -81,97 +81,106 @@ const trendingMovies: MovieData[] = [
 
 export function TrendingSection() {
   const [startIndex, setStartIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(4);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const itemsToShow = 4; // Number of movies to show at once
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 640) setItemsPerView(1);
+      else if (width < 768) setItemsPerView(2);
+      else if (width < 1024) setItemsPerView(3);
+      else setItemsPerView(4);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const scrollPrev = () => {
-    if (startIndex > 0) {
-      setStartIndex(prev => prev - 1);
-    }
+    setStartIndex(prev => Math.max(0, prev - 1));
   };
 
   const scrollNext = () => {
-    if (startIndex < trendingMovies.length - itemsToShow) {
-      setStartIndex(prev => prev + 1);
-    }
+    setStartIndex(prev => Math.min(trendingMovies.length - itemsPerView, prev + 1));
   };
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-12 md:py-20 relative overflow-hidden">
       <div className="container px-4 sm:px-6">
         <FadeIn>
-          <h2 className="text-3xl md:text-4xl font-bold mb-2">Trending Now</h2>
-          <p className="text-gray-400 mb-8">Most watched movies and shows this week</p>
+          <h2 className="text-2xl md:text-4xl font-bold mb-2">Trending Now</h2>
+          <p className="text-gray-400 mb-6 md:mb-8">Most watched movies and shows this week</p>
         </FadeIn>
-        
+
         <div className="relative">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
             <button
-            title="previous" 
+              title="previous"
               onClick={scrollPrev}
-              className="p-3 rounded-full bg-stream-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-stream-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 md:p-3 rounded-full bg-stream-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-stream-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={startIndex === 0}
             >
-              <ChevronLeftIcon className="h-6 w-6" />
+              <ChevronLeftIcon className="h-5 w-5 md:h-6 md:w-6" />
             </button>
           </div>
-          
+
           <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
-            <button 
-            title="next"
+            <button
+              title="next"
               onClick={scrollNext}
-              className="p-3 rounded-full bg-stream-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-stream-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={startIndex >= trendingMovies.length - itemsToShow}
+              className="p-2 md:p-3 rounded-full bg-stream-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-stream-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={startIndex >= trendingMovies.length - itemsPerView}
             >
-              <ChevronRightIcon className="h-6 w-6" />
+              <ChevronRightIcon className="h-5 w-5 md:h-6 md:w-6" />
             </button>
           </div>
-          
-          <div 
+
+          <div
             ref={carouselRef}
-            className="carousel-container overflow-hidden mx-10"
+            className="overflow-hidden mx-4 md:mx-10"
           >
-            <div 
+            <div
               className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(-${startIndex * (100 / itemsToShow)}%)` }}
+              style={{ transform: `translateX(-${startIndex * (100 / itemsPerView)}%)` }}
             >
               {trendingMovies.map((movie, index) => (
-                <motion.div 
-                  key={movie.id} 
-                  className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0 px-2"
+                <motion.div
+                  key={movie.id}
+                  className="flex-shrink-0 px-2"
+                  style={{ width: `${100 / itemsPerView}%` }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="relative group overflow-hidden rounded-lg"
-                    whileHover={{ 
-                      scale: 1.05,
-                      transition: { duration: 0.3 }
-                    }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
                   >
                     <div className="aspect-[2/3] overflow-hidden rounded-lg">
-                      <motion.img 
-                        src={movie.imageUrl} 
+                      <motion.img
+                        src={movie.imageUrl}
                         alt={movie.title}
                         className="w-full h-full object-cover"
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.5 }}
                       />
                     </div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-                      <h3 className="text-lg font-semibold text-white">{movie.title}</h3>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 bg-gradient-to-t from-black/90 to-transparent">
+                      <h3 className="text-base md:text-lg font-semibold text-white">{movie.title}</h3>
                       <div className="flex items-center justify-between mt-1">
                         <div className="flex items-center">
                           <StarIcon className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                          <span className="ml-1 text-sm text-gray-300">{movie.rating}</span>
+                          <span className="ml-1 text-xs md:text-sm text-gray-300">{movie.rating}</span>
                         </div>
-                        <div className="text-sm text-gray-400">{movie.year} • {movie.genre}</div>
+                        <div className="text-xs md:text-sm text-gray-400">{movie.year} • {movie.genre}</div>
                       </div>
                     </div>
-                    
-                    <motion.div 
+
+                    <motion.div
                       className="absolute inset-0 bg-stream-accent/0"
                       whileHover={{ backgroundColor: "rgba(51, 133, 255, 0.1)" }}
                       transition={{ duration: 0.3 }}

@@ -4,10 +4,6 @@ import { motion } from 'framer-motion'
 import Head from 'next/head'
 import router from 'next/router'
 import React, { useState } from 'react'
-
-// import { PlayIcon } from "@/heroicons/24/outline";
-// import { PlayPauseIcon } from '@heroicons/react/24/outline'
-// import { HomeNavbar } from '@/components/navbar'
 import { Search, X, Menu, ArrowRight, Facebook, Instagram, Mail, Twitter, Youtube, Play } from 'lucide-react'
 import { Button } from '@/components/button'
 
@@ -20,88 +16,6 @@ function home() {
       <Head>
         <title>Welcome to StreamBox</title>
       </Head>
-        {/* <div
-      className="h-16 w-full top-0 right-0 left-0 fixed bg-black bg-opacity-40 backdrop-blur-sm flex justify-between p-5 zoom-in z-30"
-    >
-      <div className="flex w-full justify-between">
-        <div>
-        <img src="/images/logo.png" className="h-12" alt="Logo" />
-        </div>
-        <div>
-          <nav className="hidden md:flex space-x-4 font-semibold mt-2 text-white">
-            <a
-              href="/build/index.html"
-              className="no-underline text-blue-500 hover:transition-transform hover:-translate-y-2 hover:ease-in-out hover:duration-500"
-              >Home</a
-            >
-            <a
-              href="/build/services.html"
-              className="no-underline hover:text-blue-300 hover:transition-transform hover:-translate-y-2 hover:ease-in-out hover:duration-500"
-              >Services</a
-            >
-            <a
-              href="/build/movies.html"
-              className="no-underline hover:text-blue-300 hover:transition-transform hover:-translate-y-2 hover:ease-in-out hover:duration-500"
-              >Movies</a
-            >
-            <a
-              href="/build/about.html"
-              className="no-underline hover:text-blue-300 hover:transition-transform hover:-translate-y-2 hover:ease-in-out hover:duration-500"
-              >About</a
-            >
-            <a
-              href="/build/contact.html"
-              className="no-underline hover:text-blue-300 hover:transition-transform hover:-translate-y-2 hover:ease-in-out hover:duration-500"
-              >Contact</a
-            >
-          </nav>
-        </div>
-      </div>
-      <div>
-        <div className="menu-btn md:hidden hover:cursor-pointer">
-          <div
-            className="btn-line bg-white h-0.5 w-9 m-2 transition-all ease-out"
-          ></div>
-          <div
-            className="btn-line bg-white h-0.5 w-9 m-2 transition-all ease-out"
-          ></div>
-          <div
-            className="btn-line bg-white h-0.5 w-9 m-2 transition-all ease-out"
-          ></div>
-        </div>
-        <div className="menu hidden">
-          <nav
-            className="flex flex-col space-y-4 bg-opacity-80 bg-black border-[1px] border-blue-600 rounded-md p-4 w-36 top-4 float-right backdrop-blur-sm"
-          >
-            <a
-              href="/build/home.html"
-              className="no-underline text-blue-500 hover:text-blue-300 nav-item"
-              >Home</a
-            >
-            <a
-              href="/build/services.html"
-              className="no-underline hover:text-blue-300 nav-item"
-              >Services</a
-            >
-            <a
-              href="/build/movies.html"
-              className="no-underline hover:text-blue-300 nav-item"
-              >Movies</a
-            >
-            <a
-              href="/build/about.html"
-              className="no-underline hover:text-blue-300 nav-item"
-              >About</a
-            >
-            <a
-              href="/build/contact.html"
-              className="no-underline hover:text-blue-300 nav-item"
-              >Contact</a
-            >
-          </nav>
-        </div>
-      </div>
-    </div> */}
     <div className="flex justify-center">
       <motion.header
             initial={{ y: -100 }}
@@ -172,40 +86,7 @@ function home() {
           </motion.header>
     </div>
     <div id='#' className="max-md:mt-0 mt-24">
-      <section className="bg-black py-16 flex relative px-14 z-10 zoom-in">
-        <div
-          className="flex relative pt-16 justify-center content-center w-full max-md:grid max-md:grid-cols-1"
-        >
-          <div
-            className="w-full xl:mt-14 md:w-1/2 max-w-[760px]"
-          >
-            <h2 className="text-5xl max-sm:text-2xl font-bold mb-4 block">
-              Your Gateway to Unlimited Entertainment
-            </h2>
-            <p className="text-2xl max-sm:text-lg mb-8 block text-white">
-              The ultimate hub for movie and series enthusiasts. Explore a
-              diverse collection of titles, complete with in-depth descriptions
-              and user ratings.
-            </p>
-            
-              <button
-                onClick={() => router.push('/auth')}
-                className="flex glass-hero text-white px-4 py-2 rounded-full hover:scale-95 hover:ease-in-out hover:duration-500 font-semibold border text-xl hover:bg-blue-700 hover:border-blue-600/80 "
-              >
-                <Play className="mr-2" />
-                Stream Now
-              </button>
-    
-          </div>
-          <div className="w-1/2 block max-md:w-full">
-            <img
-              className="rounded-lg object-cover max-lg:mt-24 right-0 h-1/2 w-full max-md:mt-8"
-              src="/images/inception.jpg"
-              alt=""
-            />
-          </div>
-        </div>
-      </section>
+      
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with overlay */}
       <div className="absolute inset-0 bg-[url('/images/hero.jpg')] bg-cover bg-center bg-no-repeat">
@@ -213,21 +94,21 @@ function home() {
       </div>
       
       {/* Animated particles */}
-      <div className="absolute inset-0">
-        {Array.from({ length: 20 }).map((_, index) => (
-          <div 
-            key={index}
-            className="absolute rounded-full bg-white/40"
-            style={{
-              width: `${Math.random() * 6 + 2}px`,
-              height: `${Math.random() * 6 + 2}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `pulse ${Math.random() * 3 + 2}s infinite, float ${Math.random() * 6 + 4}s infinite`
-            }}
-          />
-        ))}
-      </div>
+      <div className="absolute inset-0 pointer-events-none">
+      {Array.from({ length: 20 }).map((_, index) => (
+        <div 
+          key={index}
+          className="absolute rounded-full bg-white/40 animate-float-pulse"
+          style={{
+            width: `${Math.random() * 6 + 2}px`,
+            height: `${Math.random() * 6 + 2}px`,
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 2}s`
+          }}
+        />
+      ))}
+    </div>
       
       {/* Content */}
       <div className="container relative z-10 px-4 sm:px-6 text-center">
@@ -276,8 +157,66 @@ function home() {
         </motion.div>
       </div>
     </section>
+    <section className="hero2 bg-black py-12 flex relative max-sm:px-4 px-14 z-10">
+      <div className="flex relative justify-center items-start w-full max-md:grid max-md:grid-cols-1 glass pb-0 p-4 rounded-2xl shadow-lg shadow-blue-700">
+        <div className="w-full md:w-1/2 max-w-[760px] pb-8">
+          <h2 className="text-5xl max-sm:text-2xl font-bold mb-4">
+            Your Gateway to Unlimited Entertainment
+          </h2>
+          <p className="text-2xl max-sm:text-lg mb-8 text-white">
+            The ultimate hub for movie and series enthusiasts. Explore a
+            diverse collection of titles, complete with in-depth descriptions
+            and user ratings.
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="flex glass-hero text-white px-4 py-2 rounded-full hover:scale-95 hover:ease-in-out hover:duration-500 font-semibold border text-xl hover:bg-blue-700 hover:border-blue-600/80 "
+          >
+            <Play className="mr-2" />
+            Stream Now
+          </button>
+        </div>
+        <div className="w-1/2 block max-md:w-full flex-shrink-0">
+          <img
+            className="rounded-lg object-cover h-auto w-full mx-auto max-h-[400px] mb-4 hover:shadow-md "
+            src="/images/inception.jpg"
+            alt="Movie scene"
+          />
+        </div>
+      </div>
+    </section>
+{/* Animated star fragments */}
+<div className="relative h-48 -mt-10 -mb-12 overflow-hidden z-20">
+  <div className="absolute inset-0 pointer-events-none">
+    {Array.from({ length: 25 }).map((_, index) => {
+      const size = Math.random() * 4 + 2;
+      const opacity = Math.random() * 0.5 + 0.3;
+      const duration = Math.random() * 3 + 2;
+      const delay = Math.random() * 5;
+      
+      return (
+        <div
+          key={index}
+          className="absolute bg-blue-600/80 rounded-full animate-star-glow hover:!opacity-100 transition-opacity"
+          style={{
+            width: `${size}px`,
+            height: `${size}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            opacity: opacity,
+            filter: `drop-shadow(0 0 ${size}px rgba(255,255,255,${opacity}))`,
+            animation: `star-glow ${duration}s ease-in-out ${delay}s infinite`,
+            transformOrigin: 'center',
+          }}
+        />
+      );
+    })}
+  </div>
+</div>
+
+{/* Before services section */}
       <div className="mt-24">
-      <section className="py-12 mb-8">
+      <section className="services py-12 mb-8">
         <div className="container max-md:px-4 mx-auto">
           <h2 className="text-4xl font-bold text-center mb-10">Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -408,21 +347,21 @@ function home() {
       <div className="absolute inset-0 bg-blue-700/10"></div>
       
       {/* Animated particles for background effect */}
-      <div className="absolute inset-0">
-        {Array.from({ length: 12 }).map((_, index) => (
-          <div 
-            key={index}
-            className="absolute rounded-full bg-blue-700/20"
-            style={{
-              width: `${Math.random() * 10 + 5}px`,
-              height: `${Math.random() * 10 + 5}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `pulse ${Math.random() * 4 + 3}s infinite, float ${Math.random() * 8 + 5}s infinite`
-            }}
-          />
-        ))}
-      </div>
+      <div className="absolute inset-0 pointer-events-none">
+      {Array.from({ length: 12 }).map((_, index) => (
+        <div 
+          key={index}
+          className="absolute rounded-full bg-blue-700/30 animate-float-pulse"
+          style={{
+            width: `${Math.random() * 10 + 5}px`,
+            height: `${Math.random() * 10 + 5}px`,
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 2}s`
+          }}
+        />
+      ))}
+    </div>
       
       <div className="container relative z-10 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
@@ -517,7 +456,7 @@ function home() {
               <input
                 type="email"
                 placeholder="Your email"
-                className="text-black bg-stream-dark border border-gray-700 rounded-l-lg px-4 py-2 w-full focus:outline-none focus:border-blue-700"
+                className="bg-black/20 border border-gray-700 rounded-l-lg px-4 py-2 w-full focus:outline-none focus:border-blue-700"
               />
               <button title='mail' className="bg-blue-700 hover:bg-blue-700/90 text-white px-4 rounded-r-lg">
                 <Mail className="w-5 h-5" />
