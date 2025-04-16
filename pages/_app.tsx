@@ -12,7 +12,7 @@ const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/auth', ['/home', '/profiles']],
 ]);
 
-const BLOCKED_ROUTES = new Set(['/', '/profiles']);
+const BLOCKED_ROUTES = new Set(['/', '/profiles', '']); // Add empty string for root
 
 export default function App({ 
   Component, 
@@ -24,10 +24,18 @@ export default function App({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Normalize path helper
+  const normalizePath = (path: string) => {
+    if (path === '') return '/';
+    if (!path.startsWith('/')) return `/${path}`;
+    return path;
+  };
+
   // Handle initial page load
   useEffect(() => {
-    const isInitialAllowed = !BLOCKED_ROUTES.has(router.pathname) && 
-                           (router.pathname === '/home' || router.pathname === '/auth');
+    const path = normalizePath(router.pathname);
+    const isInitialAllowed = !BLOCKED_ROUTES.has(path) && 
+                           (path === '/home' || path === '/auth');
     
     const timer = setTimeout(() => {
       if (router.isReady) setIsLoading(false);
@@ -39,10 +47,10 @@ export default function App({
   // Handle client-side navigation
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      const currentPath = router.asPath.split('?')[0];
-      const targetPath = url.split('?')[0];
+      const currentPath = normalizePath(router.asPath.split('?')[0]);
+      const targetPath = normalizePath(url.split('?')[0]);
       
-      // Block these cases immediately
+      // Immediate block for these cases
       if (BLOCKED_ROUTES.has(targetPath) || currentPath === '/profiles') {
         return setIsLoading(false);
       }
