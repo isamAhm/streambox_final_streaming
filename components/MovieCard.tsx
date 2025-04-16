@@ -89,6 +89,8 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
           " 
         />
         <div className="
+          border 
+        border-[#ffffff2e]
           z-10
           glass-card
           p-2
