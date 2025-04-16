@@ -7,11 +7,6 @@ import Head from 'next/head';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 
-const ALLOWED_TRANSITIONS = new Map<string, string[]>([
-  ['/home', ['/auth']],
-  ['/auth', ['/home']],
-]);
-
 export default function App({ 
   Component, 
   pageProps: {
@@ -20,44 +15,40 @@ export default function App({
   }
 }: AppProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles']));
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Handle initial page load
+  // Handle initial home page load
   useEffect(() => {
-    const isInitialAllowed = exactPaths.has(router.pathname);
-    const timer = setTimeout(() => {
-      if (router.isReady) setIsLoading(false);
-    }, isInitialAllowed ? 2000 : 0);
+    if (router.pathname === '/home') {
+      setIsLoading(true);
+      const timer = setTimeout(() => {
+        if (router.isReady) setIsLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [router.isReady, router.pathname]);
 
-    return () => clearTimeout(timer);
-  }, [router.isReady, router.pathname, exactPaths]);
-
-  // Handle client-side navigation
+  // Handle client-side navigation to home
   useEffect(() => {
-    const handleRouteChange = (url: string) => {
-      const currentPath = router.asPath.split('?')[0];
+    const handleStart = (url: string) => {
       const targetPath = url.split('?')[0];
-      
-      const allowedTargets = ALLOWED_TRANSITIONS.get(currentPath) || [];
-      const isValidTransition = allowedTargets.includes(targetPath);
-      
-      setIsLoading(isValidTransition);
+      if (targetPath === '/home') {
+        setIsLoading(true);
+      }
     };
+    
+    const handleComplete = () => setIsLoading(false);
 
-    const handleRouteComplete = () => setIsLoading(false);
-    const handleRouteError = () => setIsLoading(false);
-
-    router.events.on('routeChangeStart', handleRouteChange);
-    router.events.on('routeChangeComplete', handleRouteComplete);
-    router.events.on('routeChangeError', handleRouteError);
+    router.events.on('routeChangeStart', handleStart);
+    router.events.on('routeChangeComplete', handleComplete);
+    router.events.on('routeChangeError', handleComplete);
 
     return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-      router.events.off('routeChangeComplete', handleRouteComplete);
-      router.events.off('routeChangeError', handleRouteError);
+      router.events.off('routeChangeStart', handleStart);
+      router.events.off('routeChangeComplete', handleComplete);
+      router.events.off('routeChangeError', handleComplete);
     };
-  }, [router.asPath, router.events]);
+  }, [router.events]);
 
   return (
     <SessionProvider session={session}>
