@@ -81,10 +81,10 @@ const Auth = () => {
       </Head>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(0,0,0,0.7)_80%)]">
         <div className="bg-black w-full h-full bg-opacity-50">
-          <nav className="px-12 py-5 flex justify-center">
-            <div className="scale-150 flex justify-center text-center content-center">
+          <nav className="px-12 py-5 flex justify-center items-center">
+            <div className="scale-150 flex justify-center text-center content-center items-center">
               <img src="/images/favicon1.png" className="h-10 w-10" alt="Logo" />
-              <p className='text-white font-semibold justify-center text-center pl-2 content-center font-[Poppins]'>Stream<span className="text-blue-500/80">Box</span></p>
+              <p className='text-white font-semibold justify-center text-center pl-2 items-center content-center font-[Poppins]'>Stream<span className="text-blue-500/80">Box</span></p>
             </div>
           </nav>
           <div className="flex justify-center">

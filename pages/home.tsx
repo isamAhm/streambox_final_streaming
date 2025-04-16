@@ -32,9 +32,9 @@ function home() {
                       pricingSection.scrollIntoView({ behavior: 'smooth' });
                     }
                   }}
-                 className="flex justify-center content-center cursor-pointer">
+                 className="flex justify-center content-center cursor-pointer items-center">
                   <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
-                  <p className="pl-2 font-semibold justify-center content-center">StreamBox</p>
+                  <p className="pl-2 font-semibold justify-center content-center items-center">StreamBox</p>
                 </div>
                 
                 <nav className="hidden md:flex ml-10 space-x-8">

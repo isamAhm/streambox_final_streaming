@@ -33,7 +33,11 @@ const Navbar = () => {
   return (
     <nav className="w-full fixed z-40">
       <div className={`px-4 md:px-16 py-6 flex flex-row items-center transition duration-500 ${showBackground ? 'bg-zinc-900 bg-opacity-90' : ''}`}>
-        <img src="/images/logo.png" className="h-4 lg:h-7" alt="Logo" />
+        <div
+          className="flex justify-center content-center cursor-pointer items-center">
+          <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
+          <p className="pl-2 font-semibold justify-center content-center items-center">StreamBox</p>
+        </div>
         <div className="flex-row ml-8 gap-7 hidden lg:flex">
           <NavbarItem label="Home" href="/" active={router.pathname === '/'} />
           <NavbarItem label="Series" href="/series" active={router.pathname === '/series'} />
