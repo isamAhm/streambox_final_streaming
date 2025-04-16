@@ -32,7 +32,7 @@ const Navbar = () => {
 
   return (
     <nav className="w-full fixed z-40">
-      <div className={`px-4 md:px-16 py-6 flex flex-row items-center transition duration-500 ${showBackground ? 'bg-zinc-900 bg-opacity-90' : ''}`}>
+      <div className={`px-4 md:px-16 py-6 flex flex-row items-center transition duration-500 ${showBackground ? 'bg-black bg-opacity-90' : ''}`}>
         <div
           className="flex justify-center content-center cursor-pointer items-center">
           <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
