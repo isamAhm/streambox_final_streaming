@@ -9,7 +9,7 @@ import { LoadingAnimation } from '@/components/loading-animation';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/home', ['/auth']],
-  ['/auth', ['/home', '/profiles']],
+  ['/auth', ['/home']],
 ]);
 
 export default function App({ 
