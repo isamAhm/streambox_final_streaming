@@ -158,7 +158,7 @@ function home() {
       </div>
     </section>
     <section className="hero2 bg-black py-12 flex relative max-sm:px-4 px-14 z-10">
-      <div className="flex relative justify-center items-start glass-card w-full max-md:grid max-md:grid-cols-1 glass pb-0 p-4 rounded-2xl shadow-lg shadow-blue-700">
+      <div className="flex relative justify-center items-start glass-hero-two w-full max-md:grid max-md:grid-cols-1 glass pb-0 p-4 rounded-2xl shadow-lg shadow-blue-700">
         <div className="w-full md:w-1/2 max-w-[760px] pb-8">
           <h2 className="text-5xl max-sm:text-2xl font-bold mb-4">
             Your Gateway to Unlimited Entertainment
