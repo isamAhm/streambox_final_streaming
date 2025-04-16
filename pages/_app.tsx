@@ -7,6 +7,8 @@ import Head from 'next/head';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 
+const LOADING_ROUTES = ['/home', '/auth', '/profile'];
+
 export default function App({ 
   Component, 
   pageProps: {
@@ -17,33 +19,41 @@ export default function App({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle initial page load with delay
+  // Handle initial page load
   useEffect(() => {
+    const isAllowedRoute = LOADING_ROUTES.includes(router.pathname);
     const timer = setTimeout(() => {
       if (router.isReady) {
         setIsLoading(false);
       }
-    }, 2000); // Adjust this number (milliseconds)
+    }, isAllowedRoute ? 2000 : 0); // Only delay for allowed routes
 
     return () => clearTimeout(timer);
-  }, [router.isReady]);
+  }, [router.isReady, router.pathname]);
 
-  // Handle client-side navigation (keep this as before)
+  // Handle client-side navigation
   useEffect(() => {
-    const handleStart = (url: string) => {
-      if (url !== router.asPath) setIsLoading(true);
-    };
-    
-    const handleComplete = () => setIsLoading(false);
+    const handleRouteChange = (url: string) => {
+      const currentPath = router.asPath.split('?')[0];
+      const targetPath = url.split('?')[0];
+      
+      const shouldShowLoading = 
+        LOADING_ROUTES.includes(currentPath) || 
+        LOADING_ROUTES.includes(targetPath);
 
-    router.events.on('routeChangeStart', handleStart);
-    router.events.on('routeChangeComplete', handleComplete);
-    router.events.on('routeChangeError', handleComplete);
+      if (shouldShowLoading) setIsLoading(true);
+    };
+
+    const handleRouteComplete = () => setIsLoading(false);
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    router.events.on('routeChangeComplete', handleRouteComplete);
+    router.events.on('routeChangeError', handleRouteComplete);
 
     return () => {
-      router.events.off('routeChangeStart', handleStart);
-      router.events.off('routeChangeComplete', handleComplete);
-      router.events.off('routeChangeError', handleComplete);
+      router.events.off('routeChangeStart', handleRouteChange);
+      router.events.off('routeChangeComplete', handleRouteComplete);
+      router.events.off('routeChangeError', handleRouteComplete);
     };
   }, [router.asPath, router.events]);
 

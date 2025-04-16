@@ -35,7 +35,7 @@ export function LoadingAnimation() {
           <h2 className="text-white text-2xl font-bold mb-2 font-[Poppins]">
             Stream<span className="text-blue-900">Box</span>
           </h2>
-          <p className="text-gray-400">Loading amazing content...</p>
+          <p className="text-gray-400">Loading what you love...</p>
         </motion.div>
       </div>
     </div>
