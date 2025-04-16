@@ -17,7 +17,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
   const redirectToWatch = useCallback(() => router.push(`/watch/${data.id}`), [router, data.id]);
 
   return (
-    <div className="group col-span relative h-[12vw] border border-[#ffffff2e]">
+    <div className="group col-span relative h-[12vw]">
       <img 
         onClick={() => openModal(data?.id)} 
         src={data.thumbnailUrl} 
@@ -84,6 +84,8 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
             w-full
             h-[12vw]
             flex-shrink-0
+            border 
+        border-[#ffffff2e]
           " 
         />
         <div className="
