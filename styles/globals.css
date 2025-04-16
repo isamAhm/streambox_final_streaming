@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,4 +29,85 @@ html {
   /* IE and Edge */
   scrollbar-width: none;
   /* Firefox */
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Add this base .logos styling */
+.logos {
+  position: relative;
+  overflow: hidden;
+  background-color: #64748b;
+  /* Match bg-slate-500 */
+}
+
+/* Fix pseudo-element positioning and colors */
+.logos:before,
+.logos:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 15%;
+  z-index: 3;
+  /* Higher than logos-slide */
+  pointer-events: none;
+  /* Allow mouse interactions through overlay */
+}
+
+.logos:before {
+  left: 0;
+  background: linear-gradient(to right,
+      rgb(0, 0, 0),
+      rgba(255, 255, 255, 0));
+}
+
+.logos:after {
+  right: 0;
+  background: linear-gradient(to left,
+      rgb(0, 0, 0),
+      rgba(255, 255, 255, 0));
+}
+
+/* Remove conflicting transition */
+.logos-slide {
+  animation: slide 40s linear infinite;
+  will-change: transform;
+  display: inline-flex;
+  min-width: 100%;
+  position: relative;
+  /* For z-index context */
+  z-index: 2;
+  /* Lower than pseudo-elements */
+}
+
+.logos-slide img {
+  flex-shrink: 0;
+  object-fit: contain;
+  filter: brightness(125%);
+  /* Optional: better contrast */
+  transition: filter 0.3s ease;
+  /* Smooth hover effect */
+}
+
+.logos-slide img:hover {
+  filter: brightness(100%);
+  /* Color on hover */
+}
+
+/* Remove this conflicting rule */
+/* .logos-slide { transition: all 0.5s ease-out; } */
+
+.logos:hover .logos-slide {
+  animation-play-state: paused;
+  transform: translate3d(-50.5%, 0, 0);
+  /* Mid-animation pause position */
 }

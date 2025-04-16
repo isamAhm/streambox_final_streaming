@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NextPageContext } from 'next';
 import { getSession } from 'next-auth/react';
 
@@ -9,6 +9,7 @@ import InfoModal from '@/components/InfoModal';
 import useMovieList from '@/hooks/useMovieList';
 import useFavorites from '@/hooks/useFavorites';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
+import { LoadingAnimation } from '@/components/loading-animation';
 
 export async function getServerSideProps(context: NextPageContext) {
   const session = await getSession(context);
@@ -31,8 +32,22 @@ const Home = () => {
   const { data: movies = [] } = useMovieList();
   const { data: favorites = [] } = useFavorites();
   const {isOpen, closeModal} = useInfoModalStore();
+  const [isLoading, setIsLoading] = useState(true);
+
+  // useEffect(() => {
+  //   // Simulate loading time (remove in production)
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 2000);
+    
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   return (
+    <div className="min-h-screen overflow-x-hidden">
+      {isLoading ? (
+        <LoadingAnimation />
+      ) : (
     <>
       <InfoModal visible={isOpen} onClose={closeModal} />
       <Navbar />
@@ -47,6 +62,8 @@ const Home = () => {
         </div>
       </div>
     </>
+          )}
+    </div>
   )
 }
 

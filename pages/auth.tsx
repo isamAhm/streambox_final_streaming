@@ -7,6 +7,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 
 import Input from '@/components/Input';
+import Head from 'next/head';
 
 export async function getServerSideProps(context: NextPageContext) {
   const session = await getSession(context);
@@ -75,6 +76,9 @@ const Auth = () => {
 
   return (
     <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
+      <Head>
+        <title>StreamBox - Login or Register</title>
+      </Head>
       <div className="bg-black w-full h-full lg:bg-opacity-50">
         <nav className="px-12 py-5">
           <img src="/images/logo.png" className="h-12" alt="Logo" />
