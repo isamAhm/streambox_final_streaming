@@ -7,7 +7,11 @@ import Head from 'next/head';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 
-const LOADING_ROUTES = ['/home', '/auth'];
+const ALLOWED_TRANSITIONS = [
+  ['/home', '/auth'],
+  ['/auth', '/home'],
+  ['/auth', '/profiles']
+];
 
 export default function App({ 
   Component, 
@@ -21,12 +25,10 @@ export default function App({
 
   // Handle initial page load
   useEffect(() => {
-    const isAllowedRoute = LOADING_ROUTES.includes(router.pathname);
+    const isInitialAllowed = ['/home', '/auth', '/profiles'].includes(router.pathname);
     const timer = setTimeout(() => {
-      if (router.isReady) {
-        setIsLoading(false);
-      }
-    }, isAllowedRoute ? 2000 : 0); // Only delay for allowed routes
+      if (router.isReady) setIsLoading(false);
+    }, isInitialAllowed ? 2000 : 0);
 
     return () => clearTimeout(timer);
   }, [router.isReady, router.pathname]);
@@ -37,11 +39,12 @@ export default function App({
       const currentPath = router.asPath.split('?')[0];
       const targetPath = url.split('?')[0];
       
-      const shouldShowLoading = 
-        LOADING_ROUTES.includes(currentPath) || 
-        LOADING_ROUTES.includes(targetPath);
+      const isAllowedTransition = ALLOWED_TRANSITIONS.some(
+        ([from, to]) => 
+          currentPath === from && targetPath === to
+      );
 
-      if (shouldShowLoading) setIsLoading(true);
+      setIsLoading(isAllowedTransition);
     };
 
     const handleRouteComplete = () => setIsLoading(false);
