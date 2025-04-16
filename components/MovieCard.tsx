@@ -63,6 +63,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
         delay-200
         w-full
         scale-0
+        backdrop-blur-md
         group-hover:scale-110
         group-hover:-translate-y-[6vw]
         group-hover:translate-x-[2vw]
