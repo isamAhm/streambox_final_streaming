@@ -7,7 +7,7 @@ import Head from 'next/head';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 
-const LOADING_ROUTES = ['/home', '/auth', '/profile'];
+const LOADING_ROUTES = ['/home', '/auth'];
 
 export default function App({ 
   Component, 
