@@ -16,7 +16,7 @@ function home() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
   return (
-    <section id='#' className="h-screen relative overflow-auto wave bg-black text-white scrollbar-transparent">
+    <section className="h-screen relative overflow-auto wave bg-black text-white scrollbar-transparent">
       <Head>
         <title>Welcome to StreamBox</title>
       </Head>
@@ -111,8 +111,17 @@ function home() {
           >
             <div className="container px-4 sm:px-6 flex items-center justify-between">
               <div className="flex items-center">
-                <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
-                <p className="pl-2 font-semibold">StreamBox</p>
+                <div
+                  onClick={() => {
+                    const pricingSection = document.getElementById('#');
+                    if (pricingSection) {
+                      pricingSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                 className="flex justify-center content-center cursor-pointer">
+                  <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
+                  <p className="pl-2 font-semibold justify-center content-center">StreamBox</p>
+                </div>
                 
                 <nav className="hidden md:flex ml-10 space-x-8">
                   <a href="#" className="text-white/80 hover:text-white transition-colors">Home</a>
@@ -146,7 +155,7 @@ function home() {
             <div className={`md:hidden ${isMenuOpen ? "block" : "hidden"}`}>
               <div className="py-4 px-7 bg-stream-black/95 backdrop-blur-md">
                 <nav className="flex flex-col space-y-4">
-                  <a href="#" className="text-white/80 hover:text-white transition-colors py-2">Home</a>
+                    <a href="#" className="text-white/80 hover:text-white transition-colors py-2">Home</a>
                   <a href="#pricing" className="text-white/80 hover:text-white transition-colors py-2">Pricing</a>
                   
                 </nav>
@@ -162,18 +171,18 @@ function home() {
             </div>
           </motion.header>
     </div>
-    <div className="mt-24">
+    <div id='#' className="max-md:mt-0 mt-24">
       <section className="bg-black py-16 flex relative px-14 z-10 zoom-in">
         <div
-          className="flex relative pt-16 justify-center w-full max-md:grid max-md:grid-cols-1"
+          className="flex relative pt-16 justify-center content-center w-full max-md:grid max-md:grid-cols-1"
         >
           <div
-            className="w-full m-14 md:w-1/2 p-0 border-separate block static h-[388px] max-w-[760px] pt-[20px]"
+            className="w-full xl:mt-14 md:w-1/2 max-w-[760px]"
           >
-            <h2 className="text-5xl font-bold mb-4 block">
+            <h2 className="text-5xl max-sm:text-2xl font-bold mb-4 block">
               Your Gateway to Unlimited Entertainment
             </h2>
-            <p className="text-2xl mb-8 block text-white">
+            <p className="text-2xl max-sm:text-lg mb-8 block text-white">
               The ultimate hub for movie and series enthusiasts. Explore a
               diverse collection of titles, complete with in-depth descriptions
               and user ratings.
@@ -181,7 +190,7 @@ function home() {
             
               <button
                 onClick={() => router.push('/auth')}
-                className="flex text-white px-4 py-2 rounded-xl hover:scale-95 hover:ease-in-out hover:duration-500 font-bold border-2 button text-xl hover:bg-blue-700 hover:border-blue-700/80 "
+                className="flex glass-hero text-white px-4 py-2 rounded-full hover:scale-95 hover:ease-in-out hover:duration-500 font-semibold border text-xl hover:bg-blue-700 hover:border-blue-600/80 "
               >
                 <Play className="mr-2" />
                 Stream Now
@@ -190,7 +199,7 @@ function home() {
           </div>
           <div className="w-1/2 block max-md:w-full">
             <img
-              className="rounded-lg object-cover right-0 h-1/2 w-full max-md:mt-8"
+              className="rounded-lg object-cover max-lg:mt-24 right-0 h-1/2 w-full max-md:mt-8"
               src="/images/inception.jpg"
               alt=""
             />
@@ -508,7 +517,7 @@ function home() {
               <input
                 type="email"
                 placeholder="Your email"
-                className="bg-stream-dark border border-gray-700 rounded-l-lg px-4 py-2 w-full focus:outline-none focus:border-blue-700"
+                className="text-black bg-stream-dark border border-gray-700 rounded-l-lg px-4 py-2 w-full focus:outline-none focus:border-blue-700"
               />
               <button title='mail' className="bg-blue-700 hover:bg-blue-700/90 text-white px-4 rounded-r-lg">
                 <Mail className="w-5 h-5" />

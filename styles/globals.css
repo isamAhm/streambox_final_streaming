@@ -111,3 +111,11 @@ html {
   transform: translate3d(-50.5%, 0, 0);
   /* Mid-animation pause position */
 }
+
+.glass {
+  @apply backdrop-blur-sm bg-white/5 border border-white/20;
+}
+
+.glass-hero {
+  @apply backdrop-blur-sm bg-blue-600/20 border border-blue-600/30;
+}
