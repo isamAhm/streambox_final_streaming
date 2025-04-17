@@ -67,7 +67,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
   return (
     <div className="z-50 transition duration-300 bg-black bg-opacity-80 flex justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0">
       <div className="relative w-auto mx-auto max-w-3xl rounded-md overflow-hidden">
-        <div className={`${isVisible ? 'scale-100' : 'scale-0'} transform duration-300 relative flex-auto bg-zinc-900 drop-shadow-md`}>
+        <div className={`${isVisible ? 'scale-100' : 'scale-0'} transform duration-300 relative flex-auto glass-card rounded-lg border border-[#ffffff2e] drop-shadow-md`}>
 
           <div className="relative h-96">
             <video
@@ -79,7 +79,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
               playsInline
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full brightness-[60%] object-cover h-full"
+              className="w-full brightness-[60%] object-cover h-full rounded-t-lg"
             />
             <div onClick={handleClose} className="cursor-pointer absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-70 flex items-center justify-center">
               <XMarkIcon className="text-white w-6" />

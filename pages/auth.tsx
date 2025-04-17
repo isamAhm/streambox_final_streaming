@@ -8,6 +8,7 @@ import { FaGithub } from 'react-icons/fa';
 
 import Input from '@/components/Input';
 import Head from 'next/head';
+import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
 
 export async function getServerSideProps(context: NextPageContext) {
   const session = await getSession(context);
@@ -81,12 +82,18 @@ const Auth = () => {
       </Head>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(0,0,0,0.7)_80%)]">
         <div className="bg-black w-full h-full bg-opacity-50">
-          <nav className="px-12 py-5 flex justify-center items-center">
-            <div className="scale-150 flex justify-center text-center content-center items-center">
-              <img src="/images/favicon1.png" className="h-10 w-10" alt="Logo" />
-              <p className='text-white font-semibold justify-center text-center pl-2 items-center content-center font-[Poppins]'>Stream<span className="text-blue-500/80">Box</span></p>
-            </div>
-          </nav>
+        <nav className="px-12 py-5 flex justify-center items-center relative">
+          <ArrowLeftIcon
+            onClick={() => router.push('/home')}
+            className="w-4 md:w-8 text-white cursor-pointer hover:opacity-80 transition absolute left-4"
+          />
+          <div className="scale-150 flex justify-center text-center content-center items-center">
+            <img src="/images/favicon1.png" className="h-10 w-10" alt="Logo" />
+            <p className='text-white font-semibold justify-center text-center pl-2 items-center content-center font-[Poppins]'>
+              Stream<span className="text-blue-500/80">Box</span>
+            </p>
+          </div>
+        </nav>
           <div className="flex justify-center">
             <div className="bg-black bg-opacity-70 px-16 py-16 self-center mt-2 lg:w-2/5 lg:max-w-md rounded-md w-4/5">
               <h2 className="text-white text-4xl mb-8 font-semibold">
