@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prismadb from '@/libs/prismadb';
-
-import { getSession } from "next-auth/react";
+import serverAuth from "@/libs/serverAuth";
 import { without } from "lodash";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,11 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).end();
     }
 
-    const session = await getSession({ req });
-
-    if (!session?.user?.email) {
-      throw new Error('Not signed in');
-    }
+    const { currentUser } = await serverAuth(req);
 
     const { movieId } = req.body;
 
@@ -30,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const user = await prismadb.user.findUnique({
       where: {
-        email: session.user.email,
+        email: currentUser.email || '',
       },
     });
 
@@ -40,9 +35,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const updatedFavoriteIds = without(user.favoriteIds, movieId);
 
+    if (!user?.email) throw new Error('Invalid user');
     const updatedUser = await prismadb.user.update({
       where: {
-        email: session.user.email,
+        email: user.email,
       },
       data: {
         favoriteIds: updatedFavoriteIds,

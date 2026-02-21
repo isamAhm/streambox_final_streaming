@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { SessionProvider } from 'next-auth/react';
+import { ClerkProvider } from '@clerk/nextjs';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 
@@ -9,19 +9,17 @@ import { LoadingAnimation } from '@/components/loading-animation';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/home', ['/auth']],
-  ['/auth', ['/home', '/profiles']],
+  ['/auth', ['/home', '/profiles', '/sso-callback']],
+  ['/sso-callback', ['/profiles']],
 ]);
 
-export default function App({ 
-  Component, 
-  pageProps: {
-    session,
-    ...pageProps
-  }
+export default function App({
+  Component,
+  pageProps
 }: AppProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles']));
+  const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles', '/sso-callback']));
 
   // Handle initial page load
   useEffect(() => {
@@ -38,10 +36,10 @@ export default function App({
     const handleRouteChange = (url: string) => {
       const currentPath = router.asPath.split('?')[0];
       const targetPath = url.split('?')[0];
-      
+
       const allowedTargets = ALLOWED_TRANSITIONS.get(currentPath) || [];
       const isValidTransition = allowedTargets.includes(targetPath);
-      
+
       setIsLoading(isValidTransition);
     };
 
@@ -60,13 +58,13 @@ export default function App({
   }, [router.asPath, router.events]);
 
   return (
-    <SessionProvider session={session}>
+    <ClerkProvider {...pageProps}>
       <Head>
         <title>StreamBox</title>
       </Head>
-      
+
       {isLoading && <LoadingAnimation />}
       <Component {...pageProps} />
-    </SessionProvider>
+    </ClerkProvider>
   );
 }

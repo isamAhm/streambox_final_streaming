@@ -6,9 +6,10 @@ interface InputProps {
   value: string;
   label: string;
   type?: string;
+  placeholder?: string;
 }
 
-const Input: React.FC<InputProps> = ({ id, onChange, value, label, type }) => {
+const Input: React.FC<InputProps> = ({ id, onChange, value, label, type, placeholder }) => {
   return (
     <div className="relative">
       <input
@@ -32,7 +33,7 @@ const Input: React.FC<InputProps> = ({ id, onChange, value, label, type }) => {
         peer
         invalid:border-b-1
         "
-        placeholder=" " 
+        placeholder={placeholder || " "} 
       />
       <label 
         htmlFor={id} 

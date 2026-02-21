@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import AccountMenu from '@/components/AccountMenu';
 import MobileMenu from '@/components/MobileMenu';
 import NavbarItem from '@/components/NavbarItem';
+import ProfileModal from '@/components/ProfileModal';
 
 const TOP_OFFSET = 66;
 
@@ -13,6 +14,7 @@ const Navbar = () => {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +31,10 @@ const Navbar = () => {
 
   const toggleAccountMenu = useCallback(() => setShowAccountMenu((current) => !current), []);
   const toggleMobileMenu = useCallback(() => setShowMobileMenu((current) => !current), []);
+  const handleEditProfile = useCallback(() => {
+    setShowProfileModal(true);
+    setShowAccountMenu(false); // Close the dropdown when opening profile modal
+  }, []);
 
   return (
     <nav className="w-full fixed z-40">
@@ -67,10 +73,15 @@ const Navbar = () => {
               <img src="/images/vr.png" alt="Profile" />
             </div>
             <ChevronDownIcon className={`w-4 text-white fill-white transition ${showAccountMenu ? 'rotate-180' : 'rotate-0'}`} />
-            <AccountMenu visible={showAccountMenu} />
+            <AccountMenu visible={showAccountMenu} onEditProfile={handleEditProfile} />
           </div>
         </div>
       </div>
+      
+      <ProfileModal 
+        visible={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
     </nav>
   );
 };
