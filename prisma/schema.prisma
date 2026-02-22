@@ -61,11 +61,32 @@ model VerificationToken {
 }
 
 model Movie {
-  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String
   videoUrl     String
   thumbnailUrl String
   genre        String
   duration     String
+  imdbId       String   @unique
+  tmdbId       Int?
+  year         Int?
+  rating       Float?
+  type         String   @default("movie") // "movie" or "tv"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WatchHistory {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
+  movieId      String   @db.ObjectId
+  progress     Float    @default(0) // Progress percentage (0-100)
+  lastWatched  DateTime @default(now())
+  completed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, movieId])
+  @@index([userId, lastWatched])
 }

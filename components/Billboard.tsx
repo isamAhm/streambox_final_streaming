@@ -1,65 +1,66 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
-import Hls from 'hls.js';
 import PlayButton from '@/components/PlayButton';
 import useBillboard from '@/hooks/useBillboard';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
+import axios from 'axios';
 
 const Billboard: React.FC = () => {
   const { openModal } = useInfoModalStore();
   const { data } = useBillboard();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls>();
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   const handleOpenModal = useCallback(() => {
     openModal(data?.id);
   }, [openModal, data?.id]);
 
+  // Fetch trailer when billboard data loads
   useEffect(() => {
-    if (!data?.videoUrl || !videoRef.current) return;
+    if (data?.id) {
+      setShowTrailer(false);
+      setTrailerUrl(null);
 
-    const isHLS = data.videoUrl.includes('.m3u8');
-    
-    // Cleanup previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
+      axios.get(`/api/movies/trailer/${data.id}`)
+        .then(response => {
+          setTrailerUrl(response.data.trailerUrl);
+          // Small delay to ensure smooth transition
+          setTimeout(() => setShowTrailer(true), 500);
+        })
+        .catch(error => {
+          console.log('No trailer available:', error);
+          setTrailerUrl(null);
+        });
     }
-
-    if (isHLS) {
-      if (Hls.isSupported()) {
-        hlsRef.current = new Hls();
-        hlsRef.current.attachMedia(videoRef.current);
-        hlsRef.current.loadSource(data.videoUrl);
-      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support in Safari
-        videoRef.current.src = data.videoUrl;
-      }
-    } else {
-      // Regular MP4 playback
-      videoRef.current.src = data.videoUrl;
-    }
-
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-      }
-    };
-  }, [data?.videoUrl]);
+  }, [data?.id]);
 
   return (
     <div className="relative h-[56.25vw]">
-      <video
-        ref={videoRef}
-        poster={data?.thumbnailUrl}
-        className="w-full h-[56.25vw] object-cover brightness-[60%] transition duration-500"
-        autoPlay
-        muted
-        loop
-        playsInline
-        disablePictureInPicture
-        onContextMenu={(e) => e.preventDefault()}
+      {/* Poster Image - Always shown first, then fades when trailer loads */}
+      <div
+        className={`absolute inset-0 w-full h-[56.25vw] object-cover brightness-[60%] bg-cover bg-center transition-opacity duration-1000 ${showTrailer && trailerUrl ? 'opacity-0' : 'opacity-100'
+          }`}
+        style={{ backgroundImage: `url(${data?.thumbnailUrl})` }}
       />
-      <div className="absolute top-[30%] md:top-[40%] ml-4 md:ml-16">
+
+      {/* YouTube Trailer - Fades in when loaded */}
+      {trailerUrl && (
+        <div className={`absolute inset-0 transition-opacity duration-1000 ${showTrailer ? 'opacity-100' : 'opacity-0'}`}>
+          <iframe
+            src={trailerUrl}
+            className="w-full h-[56.25vw] object-cover brightness-[60%] pointer-events-none"
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+            title={`${data?.title} Trailer`}
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Overlay to block YouTube interactions */}
+          <div className="absolute inset-0 pointer-events-none" />
+        </div>
+      )}
+
+      {/* Content Overlay */}
+      <div className="absolute top-[30%] md:top-[40%] ml-4 md:ml-16 z-10">
         <p className="text-white text-1xl md:text-5xl h-full w-[50%] lg:text-6xl font-bold drop-shadow-xl">
           {data?.title}
         </p>

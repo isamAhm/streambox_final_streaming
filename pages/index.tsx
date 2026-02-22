@@ -4,9 +4,11 @@ import { NextPageContext } from 'next';
 import Navbar from '@/components/Navbar';
 import Billboard from '@/components/Billboard';
 import MovieList from '@/components/MovieList';
+import ContinueWatchingList from '@/components/ContinueWatchingList';
 import InfoModal from '@/components/InfoModal';
 import useMovieList from '@/hooks/useMovieList';
 import useFavorites from '@/hooks/useFavorites';
+import useContinueWatching from '@/hooks/useContinueWatching';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import { LoadingAnimation } from '@/components/loading-animation';
 
@@ -14,9 +16,17 @@ import { LoadingAnimation } from '@/components/loading-animation';
 const Home = () => {
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
+  const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError } = useContinueWatching();
   const { isOpen, closeModal } = useInfoModalStore();
 
   const isLoading = isMoviesLoading || isFavoritesLoading;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Continue Watching Data:', continueWatching);
+    console.log('Continue Watching Loading:', isContinueWatchingLoading);
+    console.log('Continue Watching Error:', continueWatchingError);
+  }, [continueWatching, isContinueWatchingLoading, continueWatchingError]);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -28,13 +38,18 @@ const Home = () => {
           <Navbar />
           <Billboard />
           <div className="pb-40">
+            {/* Continue Watching Section */}
+            {continueWatching && continueWatching.length > 0 && (
+              <ContinueWatchingList data={continueWatching} />
+            )}
+
+            {/* Trending Now */}
             <MovieList title="Trending Now" data={movies} />
-            <div className="mt-4 md:mt-8">
-              <h1 className='lg:pt-7 px-4 md:px-12 mt-12 md:-mb-12 max-md:-mb-20 text-white text-lg md:text-xl lg:text-2xl font-semibold'>
-                My List
-              </h1>
-              <MovieList title="" data={favorites} horizontal />
-            </div>
+
+            {/* My List */}
+            {favorites.length > 0 && (
+              <MovieList title="My List" data={favorites} />
+            )}
           </div>
         </>
       )}

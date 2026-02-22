@@ -17,118 +17,92 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
   const redirectToWatch = useCallback(() => router.push(`/watch/${data.id}`), [router, data.id]);
 
   return (
-    <div className="group col-span relative h-[12vw]">
-      <img 
-        onClick={() => openModal(data?.id)} 
-        src={data.thumbnailUrl} 
-        alt="Movie" 
-        draggable={false} 
-        className="
-          cursor-pointer
-          object-cover
-          transition
-          duration-200
-          shadow-xl
-          rounded-md
-          group-hover:opacity-90
-          lg:group-hover:opacity-0
-          delay-200
-          w-full
-          h-[12vw]
-          flex-shrink-0
-        " 
-      />
-      <p className='
-          cursor-pointer
-          text-white
-          transition
-          duration-200
-          font-semibold
-          rounded-md
-          group-hover:opacity-90
-          lg:group-hover:opacity-0
-          delay-200
-          w-full
-          flex-shrink-0
-          '>{data.title}</p>
-      <div className="
-        opacity-0
-        absolute
-        top-0
-        transition
-        duration-200
-        z-10
-        invisible
-        lg:visible
-        delay-200
-        w-full
-        scale-0
-        backdrop-blur-md
-        group-hover:scale-110
-        group-hover:-translate-y-[6vw]
-        group-hover:translate-x-[2vw]
-        group-hover:opacity-100
-      ">
-        <img 
-          onClick={redirectToWatch} 
-          src={data.thumbnailUrl} 
-          alt="Movie" 
-          draggable={false} 
-          className="
-            cursor-pointer
-            object-cover
-            transition
-            duration-200
-            shadow-xl
-            rounded-t-md
-            w-full
-            h-[12vw]
-            flex-shrink-0
-            border 
-        border-[#ffffff2e]
-          " 
+    <div className="group relative h-full">
+      {/* Main Card */}
+      <div className="relative aspect-[2/3] w-full transition-all duration-300 ease-in-out group-hover:scale-0 group-hover:opacity-0">
+        <img
+          onClick={() => openModal(data?.id)}
+          src={data.thumbnailUrl}
+          alt={data.title}
+          draggable={false}
+          className="cursor-pointer object-cover w-full h-full rounded-md shadow-xl"
         />
-        <div className="
-          border 
-        border-[#ffffff2e]
-          z-10
-          glass-card
-          p-2
-          lg:p-4
-          absolute
-          w-full
-          transition
-          shadow-md
-          rounded-b-md
-        ">
-          <div className="flex flex-row items-center gap-3">
-            <div 
-              onClick={redirectToWatch} 
-              className="cursor-pointer w-6 h-6 lg:w-10 lg:h-10 bg-white rounded-full flex justify-center items-center transition hover:bg-neutral-300"
-            >
-              <PlayIcon className="text-black w-4 lg:w-6" />
-            </div>
-            <FavoriteButton movieId={data.id} />
-            <div 
-              onClick={() => openModal(data?.id)} 
-              className="cursor-pointer ml-auto group/item w-6 h-6 lg:w-10 lg:h-10 border-white border-2 rounded-full flex justify-center items-center transition hover:border-neutral-300"
-            >
-              <ChevronDownIcon className="text-white group-hover/item:text-neutral-300 w-4 lg:w-6" />
-            </div>
+      </div>
+
+      {/* Title below card */}
+      <p className="text-white text-sm mt-2 font-semibold truncate transition-opacity duration-300 group-hover:opacity-0">
+        {data.title}
+      </p>
+
+      {/* Hover Card - Appears on hover with scale and details */}
+      <div className="
+        absolute 
+        top-0 
+        left-0
+        w-full
+        opacity-0 
+        scale-0
+        group-hover:opacity-100 
+        group-hover:scale-150
+        transition-all 
+        duration-300 
+        ease-in-out
+        z-50
+        origin-center
+      ">
+        <div className="bg-zinc-900 rounded-md shadow-2xl overflow-hidden">
+          {/* Image */}
+          <div className="relative aspect-[2/3] w-full">
+            <img
+              onClick={redirectToWatch}
+              src={data.thumbnailUrl}
+              alt={data.title}
+              draggable={false}
+              className="cursor-pointer object-cover w-full h-full"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
           </div>
-          <p className="text-green-400 font-semibold mt-4">
-            New <span className="text-white">2023</span>
-          </p>
-          <div className="flex flex-row mt-4 gap-2 items-center"> 
-            <p className="text-white text-[10px] lg:text-sm">{data.duration}</p>
-          </div>
-          <div className="flex flex-row items-center gap-2 mt-4 text-[8px] text-white lg:text-sm">
-            <p>{data.genre}</p>
+
+          {/* Details */}
+          <div className="p-3 space-y-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={redirectToWatch}
+                className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:bg-gray-200 transition"
+              >
+                <PlayIcon className="w-4 h-4 text-black ml-0.5" />
+              </button>
+              <FavoriteButton movieId={data.id} />
+              <button
+                onClick={() => openModal(data?.id)}
+                className="ml-auto w-8 h-8 border-2 border-gray-400 rounded-full flex items-center justify-center hover:border-white transition"
+              >
+                <ChevronDownIcon className="w-4 h-4 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-white font-bold text-sm line-clamp-1">
+              {data.title}
+            </h3>
+
+            {/* Meta Info */}
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              {data.year && <span className="text-green-400">{data.year}</span>}
+              {data.duration && <span>• {data.duration}</span>}
+            </div>
+
+            {/* Genre */}
+            {data.genre && (
+              <p className="text-xs text-gray-400 line-clamp-1">{data.genre}</p>
+            )}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default MovieCard;

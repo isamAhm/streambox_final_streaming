@@ -6,4 +6,5 @@ export interface MovieInterface {
   videoUrl: string;
   duration: string;
   genre: string;
+  year: string;
 }
