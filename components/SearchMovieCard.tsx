@@ -39,9 +39,16 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
                         <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">
                             {data.title}
                         </h3>
-                        {data.year && (
-                            <p className="text-gray-300 text-xs">{data.year}</p>
-                        )}
+                        <div className="flex items-center gap-2 text-xs">
+                            {data.year && (
+                                <span className="text-gray-300">{data.year}</span>
+                            )}
+                            {data.rating && (
+                                <span className="flex items-center gap-1 text-gray-300">
+                                    • <span className="text-yellow-400">★</span> {data.rating.toFixed(1)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,9 +58,16 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
                 <h3 className="text-white text-sm font-semibold truncate">
                     {data.title}
                 </h3>
-                {data.year && (
-                    <p className="text-gray-400 text-xs">{data.year}</p>
-                )}
+                <div className="flex items-center gap-2 text-xs">
+                    {data.year && (
+                        <span className="text-gray-400">{data.year}</span>
+                    )}
+                    {data.rating && (
+                        <span className="flex items-center gap-1 text-gray-400">
+                            • <span className="text-yellow-400">★</span> {data.rating.toFixed(1)}
+                        </span>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -91,6 +91,11 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
             <div className="flex items-center gap-2 text-xs text-gray-400">
               {data.year && <span className="text-green-400">{data.year}</span>}
               {data.duration && <span>• {data.duration}</span>}
+              {data.rating && (
+                <span className="flex items-center gap-1">
+                  • <span className="text-yellow-400">★</span> {data.rating.toFixed(1)}
+                </span>
+              )}
             </div>
 
             {/* Genre */}

@@ -140,6 +140,11 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
               <p className="text-white text-lg">
                 {data?.duration}
               </p>
+              {data?.rating && (
+                <p className="text-white text-lg flex items-center gap-1">
+                  <span className="text-yellow-400">★</span> {data.rating.toFixed(1)}
+                </p>
+              )}
               <p className="text-white text-lg">
                 {data?.genre}
               </p>

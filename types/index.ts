@@ -7,4 +7,5 @@ export interface MovieInterface {
   duration: string;
   genre: string;
   year: string;
+  rating?: number;
 }
