@@ -80,17 +80,19 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
           </button>
         )}
 
-        {/* Scrollable Container */}
+        {/* Scrollable Container with padding for hover expansion */}
         <div
           ref={listRef}
           onScroll={checkScrollPosition}
-          className="flex gap-2 overflow-x-scroll scrollbar-hide scroll-smooth pb-8 pt-2"
+          className="flex gap-2 overflow-x-scroll scrollbar-hide scroll-smooth pb-14 pt-8 px-12"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {data.map((movie, index) => {
             const isHovered = hoveredIndex === index;
             const isBeforeHovered = hoveredIndex !== null && index < hoveredIndex;
             const isAfterHovered = hoveredIndex !== null && index > hoveredIndex;
+            const isFirst = index === 0;
+            const isLast = index === data.length - 1;
 
             return (
               <div
@@ -103,6 +105,7 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
                       ? 'translateX(25%)'
                       : 'translateX(0)',
                   zIndex: isHovered ? 60 : 10,
+                  transformOrigin: isFirst ? 'left' : isLast ? 'right' : 'center',
                 }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
