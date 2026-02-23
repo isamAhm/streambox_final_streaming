@@ -21,8 +21,17 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
     const listRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
+    const [items, setItems] = useState(data);
 
-    if (isEmpty(data)) return null;
+    useEffect(() => {
+        setItems(data);
+    }, [data]);
+
+    if (isEmpty(items)) return null;
+
+    const handleRemove = (movieId: string) => {
+        setItems(prevItems => prevItems.filter(item => item.id !== movieId));
+    };
 
     const handleScroll = (direction: 'left' | 'right') => {
         if (!listRef.current) return;
@@ -45,7 +54,7 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
 
     useEffect(() => {
         checkScrollPosition();
-    }, [data]);
+    }, [items]);
 
     return (
         <div className="px-4 md:px-12 mt-4 mb-8">
@@ -94,7 +103,7 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
                     className="flex gap-2 md:gap-3 overflow-x-scroll scrollbar-hide scroll-smooth pb-4"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                    {data.map((item) => (
+                    {items.map((item) => (
                         <div
                             key={item.id}
                             className="flex-none w-[240px] sm:w-[280px] md:w-[320px] lg:w-[360px]"
@@ -104,6 +113,7 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
                                     ...item,
                                     year: item.year?.toString() || '',
                                 }}
+                                onRemove={handleRemove}
                             />
                         </div>
                     ))}

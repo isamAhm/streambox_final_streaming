@@ -9,6 +9,8 @@ import InfoModal from '@/components/InfoModal';
 import useMovieList from '@/hooks/useMovieList';
 import useFavorites from '@/hooks/useFavorites';
 import useContinueWatching from '@/hooks/useContinueWatching';
+import useSeries from '@/hooks/useSeries';
+import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import { LoadingAnimation } from '@/components/loading-animation';
 
@@ -17,9 +19,11 @@ const Home = () => {
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
   const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError } = useContinueWatching();
+  const { data: series = [], isLoading: isSeriesLoading } = useSeries();
+  const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRated();
   const { isOpen, closeModal } = useInfoModalStore();
 
-  const isLoading = isMoviesLoading || isFavoritesLoading;
+  const isLoading = isMoviesLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
 
   // Debug logging
   useEffect(() => {
@@ -49,6 +53,16 @@ const Home = () => {
             {/* My List */}
             {favorites.length > 0 && (
               <MovieList title="My List" data={favorites} />
+            )}
+
+            {/* Series */}
+            {series.length > 0 && (
+              <MovieList title="Series" data={series} />
+            )}
+
+            {/* Top Rated */}
+            {topRated.length > 0 && (
+              <MovieList title="Top Rated" data={topRated} />
             )}
           </div>
         </>

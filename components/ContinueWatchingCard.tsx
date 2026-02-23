@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
-import { PlayIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import axios from 'axios';
 
 interface ContinueWatchingCardProps {
     data: {
@@ -12,12 +13,34 @@ interface ContinueWatchingCardProps {
         year?: string;
         progress: number;
     };
+    onRemove?: (movieId: string) => void;
 }
 
-const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data }) => {
+const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data, onRemove }) => {
     const router = useRouter();
+    const [isRemoving, setIsRemoving] = useState(false);
 
     const redirectToWatch = useCallback(() => router.push(`/watch/${data.id}`), [router, data.id]);
+
+    const handleRemove = useCallback(async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent card click
+
+        if (isRemoving) return;
+
+        setIsRemoving(true);
+
+        try {
+            await axios.delete(`/api/watch-history/delete?movieId=${data.id}`);
+
+            // Call the onRemove callback to update the UI
+            if (onRemove) {
+                onRemove(data.id);
+            }
+        } catch (error) {
+            console.error('Error removing from continue watching:', error);
+            setIsRemoving(false);
+        }
+    }, [data.id, onRemove, isRemoving]);
 
     return (
         <div className="group relative h-full cursor-pointer" onClick={redirectToWatch}>
@@ -32,6 +55,16 @@ const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data }) => 
 
                 {/* Dark overlay on hover */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Remove button - top right */}
+                <button
+                    onClick={handleRemove}
+                    disabled={isRemoving}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-black/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 disabled:opacity-50"
+                    title="Remove from Continue Watching"
+                >
+                    <XMarkIcon className="w-5 h-5 text-white" />
+                </button>
 
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
