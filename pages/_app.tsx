@@ -6,6 +6,7 @@ import Head from 'next/head';
 
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
+import ClerkErrorBoundary from '@/components/ClerkErrorBoundary';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/home', ['/auth']],
@@ -59,12 +60,14 @@ export default function App({
 
   return (
     <ClerkProvider {...pageProps}>
-      <Head>
-        <title>StreamBox</title>
-      </Head>
+      <ClerkErrorBoundary>
+        <Head>
+          <title>StreamBox</title>
+        </Head>
 
-      {isLoading && <LoadingAnimation />}
-      <Component {...pageProps} />
+        {isLoading && <LoadingAnimation />}
+        <Component {...pageProps} />
+      </ClerkErrorBoundary>
     </ClerkProvider>
   );
 }

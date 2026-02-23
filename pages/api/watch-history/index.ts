@@ -46,7 +46,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Filter out null values (movies that were deleted)
         const validMovies = moviesWithProgress.filter(movie => movie !== null);
 
-        return res.status(200).json(validMovies);
+        // Deduplicate by movie ID (just in case)
+        const uniqueMovies = validMovies.reduce((acc, movie) => {
+            if (movie && !acc.find(m => m.id === movie.id)) {
+                acc.push(movie);
+            }
+            return acc;
+        }, [] as any[]);
+
+        return res.status(200).json(uniqueMovies);
 
     } catch (error: any) {
         console.error('Watch history error:', error);

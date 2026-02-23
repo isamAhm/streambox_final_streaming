@@ -125,7 +125,8 @@ class TMDBService {
             const trailer = videos.results.find(
                 v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
             );
-            return trailer ? `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&loop=1&playlist=${trailer.key}&enablejsapi=0` : null;
+            // Use youtube-nocookie.com to reduce bot detection
+            return trailer ? `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&loop=1&playlist=${trailer.key}&enablejsapi=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}` : null;
         } catch (error) {
             console.error('Error fetching movie trailer:', error);
             return null;
@@ -140,7 +141,8 @@ class TMDBService {
             const trailer = videos.results.find(
                 v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
             );
-            return trailer ? `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&loop=1&playlist=${trailer.key}&enablejsapi=0` : null;
+            // Use youtube-nocookie.com to reduce bot detection
+            return trailer ? `https://www.youtube-nocookie.com/embed/${trailer.key}?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&loop=1&playlist=${trailer.key}&enablejsapi=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}` : null;
         } catch (error) {
             console.error('Error fetching TV show trailer:', error);
             return null;

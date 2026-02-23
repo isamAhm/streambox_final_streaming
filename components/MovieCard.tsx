@@ -1,11 +1,10 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { MovieInterface } from '@/types';
 import FavoriteButton from '@/components/FavoriteButton';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
-import axios from 'axios';
 
 interface MovieCardProps {
   data: MovieInterface;
@@ -14,55 +13,11 @@ interface MovieCardProps {
 const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
   const router = useRouter();
   const { openModal } = useInfoModalStore();
-  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [showTrailer, setShowTrailer] = useState(false);
 
   const redirectToWatch = useCallback(() => router.push(`/watch/${data.id}`), [router, data.id]);
 
-  // Fetch trailer when hovered
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    if (isHovered && !trailerUrl) {
-      // Delay trailer fetch slightly to avoid unnecessary requests
-      timeoutId = setTimeout(async () => {
-        try {
-          const response = await axios.get(`/api/movies/trailer/${data.id}`);
-          if (response.data.trailerUrl) {
-            setTrailerUrl(response.data.trailerUrl);
-            // Show trailer after a brief delay
-            setTimeout(() => setShowTrailer(true), 300);
-          }
-        } catch (error) {
-          console.error('Error fetching trailer:', error);
-        }
-      }, 500); // Wait 500ms before fetching
-    }
-
-    if (!isHovered) {
-      setShowTrailer(false);
-    }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isHovered, data.id, trailerUrl]);
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
   return (
-    <div
-      className="group relative h-full"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="group relative h-full">
       {/* Main Card - Portrait */}
       <div className="relative aspect-[2/3] w-full transition-all duration-300 ease-in-out group-hover:scale-0 group-hover:opacity-0">
         <img
@@ -79,7 +34,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
         {data.title}
       </p>
 
-      {/* Hover Card - Landscape with trailer */}
+      {/* Hover Card - Landscape with poster */}
       <div className="
         absolute 
         top-10 
@@ -95,32 +50,17 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
         z-50
       ">
         <div className="bg-zinc-900 rounded-md shadow-2xl overflow-hidden">
-          {/* Landscape Video/Image - 16:9 */}
-          <div className="relative w-full aspect-video bg-black">
-            {showTrailer && trailerUrl ? (
-              /* YouTube Trailer */
-              <iframe
-                src={trailerUrl}
-                className="absolute inset-0 w-full h-full"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title={data.title}
-                style={{ pointerEvents: 'none' }}
-              />
-            ) : (
-              /* Poster Image while loading */
-              <>
-                <img
-                  src={data.thumbnailUrl}
-                  alt={data.title}
-                  draggable={false}
-                  className="object-cover w-full h-full"
-                />
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
-              </>
-            )}
+          {/* Landscape Image - 16:9 */}
+          <div className="relative w-full aspect-video">
+            <img
+              onClick={redirectToWatch}
+              src={data.thumbnailUrl}
+              alt={data.title}
+              draggable={false}
+              className="cursor-pointer object-cover w-full h-full"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
           </div>
 
           {/* Details */}
