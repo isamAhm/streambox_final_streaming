@@ -17,13 +17,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         await serverAuth(req);
 
-        const { query, type = 'all', page = '1' } = req.query;
+        const { query, type = 'all', page = '1', quick = 'false' } = req.query;
 
         if (!query || typeof query !== 'string') {
             return res.status(400).json({ error: 'Query parameter is required' });
         }
 
         const pageNum = parseInt(page as string);
+        const isQuickSearch = quick === 'true';
+
+        // For quick search, just search the database
+        if (isQuickSearch) {
+            // First check if we have any movies at all
+            const totalMovies = await prismadb.movie.count();
+            console.log(`Total movies in database: ${totalMovies}`);
+
+            const results = await prismadb.movie.findMany({
+                where: {
+                    title: {
+                        contains: query,
+                        mode: 'insensitive'
+                    }
+                },
+                orderBy: {
+                    popularity: 'desc'
+                },
+                take: 10
+            });
+
+            console.log(`Quick search for "${query}" found ${results.length} results`);
+            return res.status(200).json(results);
+        }
+
         let savedMovies: any[] = [];
 
         // Search movies

@@ -2,6 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
 import { PlayIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import { mutate } from 'swr';
 
 interface ContinueWatchingCardProps {
     data: {
@@ -30,14 +32,24 @@ const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data, onRem
         setIsRemoving(true);
 
         try {
-            await axios.delete(`/api/watch-history/delete?movieId=${data.id}`);
-
-            // Call the onRemove callback to update the UI
+            // Optimistically update the UI
             if (onRemove) {
                 onRemove(data.id);
             }
+
+            // Delete from server
+            await axios.delete(`/api/watch-history/delete?movieId=${data.id}`);
+
+            // Revalidate the SWR cache to ensure consistency
+            await mutate('/api/watch-history');
+
+            toast.success('Removed from Continue Watching');
         } catch (error) {
             console.error('Error removing from continue watching:', error);
+            toast.error('Failed to remove. Please try again.');
+
+            // Revalidate to restore the correct state on error
+            await mutate('/api/watch-history');
             setIsRemoving(false);
         }
     }, [data.id, onRemove, isRemoving]);

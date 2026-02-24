@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { NextPageContext } from 'next';
+import React, { useEffect } from 'react';
 
 import Navbar from '@/components/Navbar';
 import Billboard from '@/components/Billboard';
@@ -18,12 +17,17 @@ import { LoadingAnimation } from '@/components/loading-animation';
 const Home = () => {
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
-  const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError } = useContinueWatching();
+  const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError, mutate: mutateContinueWatching } = useContinueWatching();
   const { data: series = [], isLoading: isSeriesLoading } = useSeries();
   const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRated();
   const { isOpen, closeModal } = useInfoModalStore();
 
   const isLoading = isMoviesLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
+
+  // Revalidate continue watching when component mounts (user returns from watch page)
+  useEffect(() => {
+    mutateContinueWatching();
+  }, [mutateContinueWatching]);
 
   // Debug logging
   useEffect(() => {

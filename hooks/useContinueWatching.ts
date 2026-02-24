@@ -4,8 +4,10 @@ import fetcher from '@/libs/fetcher';
 const useContinueWatching = () => {
     const { data, error, isLoading, mutate } = useSWR('/api/watch-history', fetcher, {
         revalidateIfStale: true,
-        revalidateOnFocus: true,
-        revalidateOnReconnect: true,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        revalidateOnMount: true,
+        dedupingInterval: 2000, // Prevent duplicate requests within 2 seconds
     });
 
     return {

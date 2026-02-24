@@ -1,4 +1,5 @@
 import React, { Component, ReactNode } from 'react';
+import toast from 'react-hot-toast';
 
 interface Props {
     children: ReactNode;
@@ -11,6 +12,8 @@ interface State {
 }
 
 class ClerkErrorBoundaryClass extends Component<Props, State> {
+    private toastId: string | null = null;
+
     constructor(props: Props) {
         super(props);
         this.state = {
@@ -56,7 +59,61 @@ class ClerkErrorBoundaryClass extends Component<Props, State> {
         this.setState({
             errorInfo,
         });
+
+        // Show toast notification
+        this.showErrorToast();
     }
+
+    showErrorToast = () => {
+        // Dismiss any existing toast
+        if (this.toastId) {
+            toast.dismiss(this.toastId);
+        }
+
+        // Show custom toast with action buttons
+        this.toastId = toast.error(
+            (t) => (
+                <div className="flex flex-col gap-3">
+                    <div>
+                        <p className="font-semibold text-white">Session Expired</p>
+                        <p className="text-sm text-gray-300 mt-1">
+                            Your session has expired. Please refresh to continue.
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                toast.dismiss(t.id);
+                                window.location.reload();
+                            }}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                        >
+                            Refresh
+                        </button>
+                        <button
+                            onClick={() => {
+                                toast.dismiss(t.id);
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                window.location.href = '/auth';
+                            }}
+                            className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
+                        >
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            ),
+            {
+                duration: Infinity,
+                style: {
+                    background: '#18181b',
+                    border: '1px solid #ef4444',
+                    maxWidth: '400px',
+                },
+            }
+        ) as string;
+    };
 
     handleRetry = () => {
         // Clear error state
@@ -66,11 +123,21 @@ class ClerkErrorBoundaryClass extends Component<Props, State> {
             errorInfo: null,
         });
 
+        // Dismiss toast
+        if (this.toastId) {
+            toast.dismiss(this.toastId);
+        }
+
         // Reload the page to get fresh tokens
         window.location.reload();
     };
 
     handleSignOut = () => {
+        // Dismiss toast
+        if (this.toastId) {
+            toast.dismiss(this.toastId);
+        }
+
         // Clear all local storage and cookies
         localStorage.clear();
         sessionStorage.clear();
@@ -80,63 +147,8 @@ class ClerkErrorBoundaryClass extends Component<Props, State> {
     };
 
     render() {
-        if (this.state.hasError) {
-            return (
-                <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                    <div className="max-w-md w-full bg-zinc-900 rounded-lg p-8 text-center">
-                        <div className="mb-6">
-                            <svg
-                                className="w-16 h-16 text-red-500 mx-auto mb-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                                />
-                            </svg>
-                            <h1 className="text-white text-2xl font-bold mb-2">
-                                Session Expired
-                            </h1>
-                            <p className="text-gray-400 text-sm mb-4">
-                                Your session has expired or there was a network issue. Please try again.
-                            </p>
-                        </div>
-
-                        {process.env.NODE_ENV === 'development' && this.state.error && (
-                            <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded text-left">
-                                <p className="text-red-400 text-xs font-mono break-all">
-                                    {this.state.error.message}
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="space-y-3">
-                            <button
-                                onClick={this.handleRetry}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                            >
-                                Retry
-                            </button>
-                            <button
-                                onClick={this.handleSignOut}
-                                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                            >
-                                Sign Out & Restart
-                            </button>
-                        </div>
-
-                        <p className="text-gray-500 text-xs mt-6">
-                            If this problem persists, please clear your browser cache and cookies.
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
+        // Don't render error UI, let the toast handle it
+        // This allows the app to continue rendering while showing the error notification
         return this.props.children;
     }
 }

@@ -206,6 +206,7 @@ class TMDBService {
             tmdbId: tmdbShow.id,
             year: new Date(tmdbShow.first_air_date).getFullYear(),
             rating: tmdbShow.vote_average,
+            popularity: (tmdbShow as any).popularity || 0,
             type: 'tv'
         };
     }

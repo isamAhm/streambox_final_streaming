@@ -1,6 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import ContinueWatchingCard from '@/components/ContinueWatchingCard';
-import { isEmpty } from 'lodash';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface ContinueWatchingItem {
@@ -21,13 +20,15 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
     const listRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
-    const [items, setItems] = useState(data);
+    const [items, setItems] = useState<ContinueWatchingItem[]>(data);
 
+    // Update items when data prop changes
     useEffect(() => {
         setItems(data);
     }, [data]);
 
-    if (isEmpty(items)) return null;
+    // Memoize isEmpty check to avoid recalculation
+    const isEmpty = useMemo(() => !items || items.length === 0, [items]);
 
     const handleRemove = (movieId: string) => {
         setItems(prevItems => prevItems.filter(item => item.id !== movieId));
@@ -55,6 +56,11 @@ const ContinueWatchingList: React.FC<ContinueWatchingListProps> = ({ data }) => 
     useEffect(() => {
         checkScrollPosition();
     }, [items]);
+
+    // Return null after all hooks have been called
+    if (isEmpty) {
+        return null;
+    }
 
     return (
         <div className="px-4 md:px-12 mt-4 mb-8">

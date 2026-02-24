@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAuth } from '@clerk/nextjs/server';
 import prismadb from '@/libs/prismadb';
+import serverAuth from '@/libs/serverAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -8,11 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(405).json({ error: 'Method not allowed' });
         }
 
-        const { userId } = getAuth(req);
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        const { currentUser } = await serverAuth(req);
 
         const { movieId } = req.query;
 
@@ -20,15 +16,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Invalid movie ID' });
         }
 
+        console.log(`Deleting watch history for userId: ${currentUser.id}, movieId: ${movieId}`);
+
         // Delete the watch history entry
-        await prismadb.watchHistory.deleteMany({
+        const deleted = await prismadb.watchHistory.deleteMany({
             where: {
-                userId: userId,
+                userId: currentUser.id,
                 movieId: movieId,
             },
         });
 
-        return res.status(200).json({ success: true });
+        console.log(`Deleted ${deleted.count} watch history entries`);
+
+        return res.status(200).json({
+            success: true,
+            deletedCount: deleted.count
+        });
     } catch (error) {
         console.error('Error deleting watch history:', error);
         return res.status(500).json({ error: 'Internal server error' });

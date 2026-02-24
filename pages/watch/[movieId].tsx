@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import useMovie from '@/hooks/useMovie';
 import { streamingService, StreamingSource } from '@/libs/streaming';
 import axios from 'axios';
+import { mutate } from 'swr';
 
 const Watch = () => {
   const router = useRouter();
@@ -27,6 +28,9 @@ const Watch = () => {
           movieId: movieId,
           progress: 0
         });
+
+        // Immediately update the continue watching list
+        await mutate('/api/watch-history');
       } catch (error) {
         console.error('Error recording watch start:', error);
       }
@@ -47,6 +51,9 @@ const Watch = () => {
           movieId: movieId,
           progress: estimatedProgress
         });
+
+        // Update the continue watching list in the background
+        mutate('/api/watch-history', undefined, { revalidate: false });
       } catch (error) {
         console.error('Error updating watch progress:', error);
       }

@@ -14,6 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const { currentUser } = await serverAuth(req);
 
+        console.log(`Fetching watch history for user: ${currentUser.id}`);
+
         // Get watch history ordered by last watched
         const watchHistory = await prismadb.watchHistory.findMany({
             where: {
@@ -25,6 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
             take: 20 // Limit to 20 items
         });
+
+        console.log(`Found ${watchHistory.length} watch history entries`);
 
         // Get movie details for each history item
         const moviesWithProgress = await Promise.all(
@@ -53,6 +57,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             return acc;
         }, [] as any[]);
+
+        console.log(`Returning ${uniqueMovies.length} unique movies`);
 
         return res.status(200).json(uniqueMovies);
 

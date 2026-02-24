@@ -12,74 +12,105 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         await serverAuth(req);
 
-        // Fetch popular TV shows from TMDB
-        const popularShows = await tmdbService.getPopularTVShows(1);
+        const { fetchMore = 'false' } = req.query;
+        const shouldFetchMore = fetchMore === 'true';
 
-        // Process and save each show to database
-        const savedShows = await Promise.all(
-            popularShows.results.slice(0, 20).map(async (show) => {
-                try {
-                    // Get full details including IMDB ID
-                    const details = await tmdbService.getTVShowDetails(show.id);
+        // If fetchMore is requested, fetch the next batch from TMDB in background
+        if (shouldFetchMore) {
+            // Calculate next TMDB page to fetch
+            const currentCount = await prismadb.movie.count({ where: { type: 'tv' } });
+            const nextTMDBPage = Math.floor(currentCount / 20) + 1;
 
-                    if (!details.external_ids?.imdb_id) {
-                        console.log(`No IMDB ID for show: ${show.name}`);
-                        return null;
+            // TMDB has a limit of 500 pages, so check if we've reached it
+            if (nextTMDBPage <= 500) {
+                console.log(`Fetching TMDB page ${nextTMDBPage} in background...`);
+
+                // Fetch and process in background (don't block response)
+                tmdbService.getPopularTVShows(nextTMDBPage).then(async (tmdbResponse) => {
+                    // If we got results, process them
+                    if (tmdbResponse.results && tmdbResponse.results.length > 0) {
+                        await Promise.all(
+                            tmdbResponse.results.map(async (show) => {
+                                try {
+                                    const details = await tmdbService.getTVShowDetails(show.id);
+
+                                    if (!details.external_ids?.imdb_id) {
+                                        return null;
+                                    }
+
+                                    // Filter: Only include English-language shows or shows with high popularity
+                                    const isEnglish = (show as any).original_language === 'en';
+                                    const isHighlyPopular = (show as any).popularity > 100;
+
+                                    // Skip non-English shows unless they're extremely popular
+                                    if (!isEnglish && !isHighlyPopular) {
+                                        return null;
+                                    }
+
+                                    const videoUrl = streamingService.getTVShowStreamUrl(
+                                        details.external_ids.imdb_id,
+                                        1,
+                                        1,
+                                        details.id
+                                    );
+
+                                    const showData = tmdbService.convertToTVShow(details);
+
+                                    await prismadb.movie.upsert({
+                                        where: { imdbId: details.external_ids.imdb_id },
+                                        update: {
+                                            title: showData.title,
+                                            description: showData.description,
+                                            thumbnailUrl: showData.thumbnailUrl,
+                                            genre: showData.genre,
+                                            duration: showData.duration,
+                                            videoUrl: videoUrl,
+                                            tmdbId: showData.tmdbId,
+                                            year: showData.year,
+                                            rating: showData.rating,
+                                            popularity: showData.popularity,
+                                            type: 'tv',
+                                        },
+                                        create: {
+                                            title: showData.title,
+                                            description: showData.description,
+                                            thumbnailUrl: showData.thumbnailUrl,
+                                            genre: showData.genre,
+                                            duration: showData.duration,
+                                            videoUrl: videoUrl,
+                                            imdbId: details.external_ids.imdb_id,
+                                            tmdbId: showData.tmdbId,
+                                            year: showData.year,
+                                            rating: showData.rating,
+                                            popularity: showData.popularity,
+                                            type: 'tv',
+                                        },
+                                    });
+
+                                    return true;
+                                } catch (error) {
+                                    console.error(`Error processing show:`, error);
+                                    return null;
+                                }
+                            })
+                        );
+                        console.log(`Completed fetching TMDB page ${nextTMDBPage}`);
+                    } else {
+                        console.log(`No more series available from TMDB at page ${nextTMDBPage}`);
                     }
+                }).catch(err => console.error('Background fetch error:', err));
+            } else {
+                console.log('Reached TMDB page limit (500 pages)');
+            }
+        }
 
-                    // Generate streaming URL
-                    const videoUrl = streamingService.getTVShowStreamUrl(
-                        details.external_ids.imdb_id,
-                        1,
-                        1,
-                        details.id
-                    );
+        // Return all series from database immediately, sorted by popularity
+        const series = await prismadb.movie.findMany({
+            where: { type: 'tv' },
+            orderBy: { popularity: 'desc' }
+        });
 
-                    // Convert to our format
-                    const showData = tmdbService.convertToTVShow(details);
-
-                    // Upsert to database
-                    const savedShow = await prismadb.movie.upsert({
-                        where: { imdbId: details.external_ids.imdb_id },
-                        update: {
-                            title: showData.title,
-                            description: showData.description,
-                            thumbnailUrl: showData.thumbnailUrl,
-                            genre: showData.genre,
-                            duration: showData.duration,
-                            videoUrl: videoUrl,
-                            tmdbId: showData.tmdbId,
-                            year: showData.year,
-                            rating: showData.rating,
-                            type: 'tv',
-                        },
-                        create: {
-                            title: showData.title,
-                            description: showData.description,
-                            thumbnailUrl: showData.thumbnailUrl,
-                            genre: showData.genre,
-                            duration: showData.duration,
-                            videoUrl: videoUrl,
-                            imdbId: details.external_ids.imdb_id,
-                            tmdbId: showData.tmdbId,
-                            year: showData.year,
-                            rating: showData.rating,
-                            type: 'tv',
-                        },
-                    });
-
-                    return savedShow;
-                } catch (error) {
-                    console.error(`Error processing show ${show.name}:`, error);
-                    return null;
-                }
-            })
-        );
-
-        // Filter out null values and return
-        const validShows = savedShows.filter(show => show !== null);
-
-        return res.status(200).json(validShows);
+        return res.status(200).json(series);
     } catch (error) {
         console.log({ error })
         return res.status(500).end();

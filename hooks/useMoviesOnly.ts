@@ -2,12 +2,12 @@ import useSWR from 'swr';
 import fetcher from '@/libs/fetcher';
 import { handleApiError } from '@/libs/errorHandler';
 
-const useSeries = () => {
-    const { data, error, isLoading, mutate } = useSWR('/api/movies/series', fetcher, {
+const useMoviesOnly = () => {
+    const { data, error, isLoading, mutate } = useSWR('/api/movies/movies-only', fetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
-        onError: (err) => handleApiError(err, 'Failed to load series'),
+        onError: (err) => handleApiError(err, 'Failed to load movies'),
     });
     return {
         data,
@@ -17,4 +17,4 @@ const useSeries = () => {
     }
 };
 
-export default useSeries;
+export default useMoviesOnly;
