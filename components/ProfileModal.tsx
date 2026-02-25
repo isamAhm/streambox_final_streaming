@@ -52,6 +52,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     }
   }, [user, isLoaded]);
 
+  const handleDeleteImage = useCallback(async () => {
+    if (!user || !isLoaded) return;
+
+    setIsUploading(true);
+    try {
+      // Delete the profile image (Clerk will revert to default)
+      await user.setProfileImage({ file: null });
+      setProfileImage('');
+    } catch (error: any) {
+      alert(error?.errors?.[0]?.message || 'Failed to delete image');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [user, isLoaded]);
+
   const handlePasswordChange = useCallback(async () => {
     if (!user || !isLoaded) return;
 
@@ -155,7 +170,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
             <div className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.tiff,.tif,.ico,.heic,.heif,.avif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleImageUpload(file);
@@ -175,7 +190,19 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
               </label>
             </div>
           </div>
-          <p className="text-gray-400 text-sm mt-2">Click to change profile picture</p>
+          <div className="flex items-center gap-2 mt-3">
+            <p className="text-gray-400 text-sm">Click to change profile picture</p>
+            {profileImage && profileImage !== '/images/default-blue.png' && (
+              <button
+                onClick={handleDeleteImage}
+                disabled={isUploading}
+                className="text-red-500 hover:text-red-400 text-sm underline disabled:opacity-50"
+                title="Delete profile image"
+              >
+                Delete
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
