@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "verify-deploy": "node verify-deployment-ready.js",
+    "prepare-deploy": "npx prisma generate && npx prisma db push && npm run build"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.5.1",

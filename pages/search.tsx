@@ -119,7 +119,7 @@ const Search = () => {
                         {results.length > 0 ? (
                             <>
                                 <h2 className="text-white text-2xl md:text-3xl font-semibold mb-6">
-                                    Search Results for "{q}"
+                                    Search Results for &quot;{q}&quot;
                                 </h2>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 pb-8">
                                     {results.map((result) => (
@@ -141,7 +141,7 @@ const Search = () => {
                             </>
                         ) : (
                             <div className="text-center py-20">
-                                <p className="text-gray-400 text-xl mb-4">No results found for "{q}"</p>
+                                <p className="text-gray-400 text-xl mb-4">No results found for &quot;{q}&quot;</p>
                                 <p className="text-gray-500">Try searching with different keywords</p>
                             </div>
                         )}

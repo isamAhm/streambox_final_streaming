@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import toast from 'react-hot-toast';
 
 import Navbar from '@/components/Navbar';
 import MovieList from '@/components/MovieList';
@@ -17,32 +16,6 @@ const Series = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 30; // 6 columns x 5 rows = 30 items per page
 
-    // Fetch more series in background continuously
-    useEffect(() => {
-        const fetchMoreInBackground = async () => {
-            if (selectedFilter === 'All') return;
-
-            const allItems = filteredSections.flatMap(section => section.data);
-            const requiredItems = currentPage * itemsPerPage;
-            const buffer = 60; // Start fetching when we're 2 pages away from the end
-
-            // If we're close to running out of items, fetch more in background
-            if (allItems.length < requiredItems + buffer) {
-                try {
-                    // Trigger background fetch (don't wait for response)
-                    axios.get(`/api/movies/series?fetchMore=true`).then(() => {
-                        // Silently refresh data after a delay
-                        setTimeout(() => mutate(), 3000);
-                    });
-                } catch (error) {
-                    console.error('Error fetching more series:', error);
-                }
-            }
-        };
-
-        fetchMoreInBackground();
-    }, [currentPage, selectedFilter]);
-
     // Auto-fetch more series on initial load and periodically
     useEffect(() => {
         const autoFetch = async () => {
@@ -58,6 +31,7 @@ const Series = () => {
         if (popularSeries.length < 100) {
             autoFetch();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Fetch series by genre

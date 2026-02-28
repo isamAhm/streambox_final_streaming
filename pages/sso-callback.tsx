@@ -10,7 +10,10 @@ export default function SSOCallback() {
     useEffect(() => {
         async function handleCallback() {
             try {
-                await handleRedirectCallback();
+                // handleRedirectCallback expects the URL or search params
+                await handleRedirectCallback({
+                    redirectUrl: '/profiles',
+                });
                 router.push('/profiles');
             } catch (error) {
                 console.error('SSO callback error:', error);
@@ -18,7 +21,10 @@ export default function SSOCallback() {
             }
         }
 
-        handleCallback();
+        // Only run if we have the necessary query params
+        if (router.isReady) {
+            handleCallback();
+        }
     }, [handleRedirectCallback, router]);
 
     return <LoadingAnimation />;

@@ -13,7 +13,7 @@ async function main() {
 
   const filePath = path.join(process.cwd(), 'movies.json');
   const raw = fs.readFileSync(filePath, 'utf-8');
-  const movies = JSON.parse(raw) as Array<{
+  const moviesData = JSON.parse(raw) as Array<{
     title: string;
     description: string;
     videoUrl: string;
@@ -21,6 +21,12 @@ async function main() {
     genre: string;
     duration: string;
   }>;
+
+  // Add imdbId to each movie (generate unique IDs)
+  const movies = moviesData.map((movie, index) => ({
+    ...movie,
+    imdbId: `tt${String(index + 1).padStart(7, '0')}`, // Generate unique IMDB-like IDs
+  }));
 
   await prisma.movie.createMany({ data: movies });
   console.log(`Seeded ${movies.length} movies`);

@@ -108,7 +108,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                     <div className="p-8 text-center">
                         <p className="text-gray-400 text-sm">No notifications yet</p>
                         <p className="text-gray-500 text-xs mt-2">
-                            We'll notify you about new content and updates
+                            We&apos;ll notify you about new content and updates
                         </p>
                     </div>
                 ) : (

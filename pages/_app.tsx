@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 import ClerkErrorBoundary from '@/components/ClerkErrorBoundary';
+import useDevToolsProtection from '@/hooks/useDevToolsProtection';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/home', ['/auth']],
@@ -23,6 +24,9 @@ export default function App({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles', '/sso-callback']));
+
+  // Enable developer tools protection in production
+  useDevToolsProtection();
 
   // Handle global errors
   useEffect(() => {

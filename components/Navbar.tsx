@@ -253,7 +253,7 @@ const Navbar = () => {
                       onClick={handleSearch}
                       className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                     >
-                      See all results for "{searchQuery}"
+                      See all results for &quot;{searchQuery}&quot;
                     </button>
                   </div>
                 </div>
