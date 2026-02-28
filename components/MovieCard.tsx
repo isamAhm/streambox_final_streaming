@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlayIcon } from '@heroicons/react/24/solid';
@@ -12,16 +12,29 @@ interface MovieCardProps {
 
 const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
   const router = useRouter();
-  const { openModal } = useInfoModalStore();
+  const { openModal, isOpen } = useInfoModalStore();
+  const [forceHideHover, setForceHideHover] = useState(false);
 
   const redirectToWatch = useCallback(() => router.push(`/watch/${data.id}`), [router, data.id]);
+
+  const handleOpenModal = useCallback(() => {
+    setForceHideHover(true);
+    openModal(data?.id);
+  }, [openModal, data?.id]);
+
+  // Reset hover state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setForceHideHover(false);
+    }
+  }, [isOpen]);
 
   return (
     <div className="group relative h-full">
       {/* Main Card - Portrait */}
-      <div className="relative aspect-[2/3] w-full transition-all duration-300 ease-in-out group-hover:scale-0 group-hover:opacity-0">
+      <div className={`relative aspect-[2/3] w-full transition-all duration-300 ease-in-out ${forceHideHover ? 'scale-100 opacity-100' : 'group-hover:scale-0 group-hover:opacity-0'}`}>
         <img
-          onClick={() => openModal(data?.id)}
+          onClick={handleOpenModal}
           src={data.thumbnailUrl}
           alt={data.title}
           draggable={false}
@@ -30,25 +43,25 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
       </div>
 
       {/* Title below card */}
-      <p className="text-white text-sm mt-2 font-semibold truncate transition-opacity duration-300 group-hover:opacity-0">
+      <p className={`text-white text-sm mt-2 font-semibold truncate transition-opacity duration-300 ${forceHideHover ? 'opacity-100' : 'group-hover:opacity-0'}`}>
         {data.title}
       </p>
 
       {/* Hover Card - Landscape with poster */}
-      <div className="
+      <div className={`
         absolute 
         top-10 
         left-0
         w-full
-        opacity-0 
-        scale-0
-        group-hover:opacity-100 
-        group-hover:scale-150
         transition-all 
         duration-300 
         ease-in-out
         z-50
-      ">
+        ${forceHideHover
+          ? 'opacity-0 scale-0 pointer-events-none'
+          : 'opacity-0 scale-0 group-hover:opacity-100 group-hover:scale-150'
+        }
+      `}>
         <div className="bg-zinc-900 rounded-md shadow-2xl overflow-hidden">
           {/* Landscape Image - 16:9 */}
           <div className="relative w-full aspect-video">
@@ -75,7 +88,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
               </button>
               <FavoriteButton movieId={data.id} />
               <button
-                onClick={() => openModal(data?.id)}
+                onClick={handleOpenModal}
                 className="ml-auto w-8 h-8 border-2 border-gray-400 rounded-full flex items-center justify-center hover:border-white transition"
               >
                 <ChevronDownIcon className="w-4 h-4 text-gray-400 hover:text-white" />
