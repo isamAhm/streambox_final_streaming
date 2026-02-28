@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { XMarkIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline';
 import PlayButton from '@/components/PlayButton';
-import FavoriteButton from '@/components/FavoriteButton';
+import WatchlistButton from '@/components/WatchlistButton';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import useMovie from '@/hooks/useMovie';
 import axios from 'axios';
@@ -118,7 +118,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
                   </p>
                   <div className="flex flex-row gap-4 items-center">
                     <PlayButton movieId={data?.id} />
-                    <FavoriteButton movieId={data?.id} />
+                    <WatchlistButton movieId={data?.id} movieTitle={data?.title} />
                   </div>
                 </div>
               </>

@@ -106,3 +106,15 @@ model Notification {
   @@index([userId, createdAt])
   @@index([userId, read])
 }
+
+model Watchlist {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  movieId   String   @db.ObjectId
+  status    String   // "watching", "completed", "plan_to_watch"
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, movieId])
+  @@index([userId, status])
+}

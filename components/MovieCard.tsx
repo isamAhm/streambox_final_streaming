@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import { MovieInterface } from '@/types';
-import FavoriteButton from '@/components/FavoriteButton';
+import WatchlistButton from '@/components/WatchlistButton';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 
 interface MovieCardProps {
@@ -86,7 +86,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
               >
                 <PlayIcon className="w-4 h-4 text-black ml-0.5" />
               </button>
-              <FavoriteButton movieId={data.id} />
+              <WatchlistButton movieId={data.id} movieTitle={data.title} />
               <button
                 onClick={handleOpenModal}
                 className="ml-auto w-8 h-8 border-2 border-gray-400 rounded-full flex items-center justify-center hover:border-white transition"

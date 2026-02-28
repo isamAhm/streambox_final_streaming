@@ -10,12 +10,14 @@ import NavbarItem from '@/components/NavbarItem';
 import ProfileModal from '@/components/ProfileModal';
 import NotificationCenter from '@/components/NotificationCenter';
 import useNotifications from '@/hooks/useNotifications';
+import useInfoModalStore from '@/hooks/useInfoModalStore';
 
 const TOP_OFFSET = 66;
 
 const Navbar = () => {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { openModal } = useInfoModalStore();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
@@ -162,7 +164,7 @@ const Navbar = () => {
   };
 
   const handleSuggestionClick = (movieId: string) => {
-    router.push(`/watch/${movieId}`);
+    openModal(movieId);
     setShowSearch(false);
     setSearchQuery('');
     setSearchSuggestions([]);

@@ -94,7 +94,7 @@ const Search = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search for movies and TV shows..."
-                            className="w-full px-6 py-4 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none text-lg"
+                            className="w-full px-6 py-4 bg-transparent text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none text-lg"
                             autoFocus
                         />
                         <button
