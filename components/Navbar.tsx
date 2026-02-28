@@ -8,6 +8,8 @@ import AccountMenu from '@/components/AccountMenu';
 import MobileMenu from '@/components/MobileMenu';
 import NavbarItem from '@/components/NavbarItem';
 import ProfileModal from '@/components/ProfileModal';
+import NotificationCenter from '@/components/NotificationCenter';
+import useNotifications from '@/hooks/useNotifications';
 
 const TOP_OFFSET = 66;
 
@@ -18,13 +20,17 @@ const Navbar = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showBackground, setShowBackground] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout>();
+
+  const { notifications, unreadCount, mutate: mutateNotifications } = useNotifications();
 
   // Get user profile image from Clerk with fallback
   const profileImage = isLoaded && user?.imageUrl
@@ -46,12 +52,40 @@ const Navbar = () => {
 
   const toggleAccountMenu = useCallback(() => setShowAccountMenu((current) => !current), []);
   const toggleMobileMenu = useCallback(() => setShowMobileMenu((current) => !current), []);
+  const toggleNotifications = useCallback(() => setShowNotifications((current) => !current), []);
   const toggleSearch = useCallback(() => {
     setShowSearch((current) => !current);
     setSearchQuery('');
     setSearchSuggestions([]);
     setShowSuggestions(false);
   }, []);
+
+  const handleMarkAsRead = useCallback(async (notificationId: string) => {
+    try {
+      await axios.patch('/api/notifications/mark-read', { notificationId });
+      mutateNotifications();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }, [mutateNotifications]);
+
+  const handleMarkAllAsRead = useCallback(async () => {
+    try {
+      await axios.patch('/api/notifications/mark-read', { markAll: true });
+      mutateNotifications();
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  }, [mutateNotifications]);
+
+  const handleDeleteNotification = useCallback(async (notificationId: string) => {
+    try {
+      await axios.delete(`/api/notifications/delete?notificationId=${notificationId}`);
+      mutateNotifications();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  }, [mutateNotifications]);
 
   // Handle search input change with debounce
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +135,9 @@ const Navbar = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
     };
 
@@ -240,8 +277,27 @@ const Navbar = () => {
             </div>
           )}
 
-          <div className="text-gray-200 hover:text-gray-300 cursor-pointer transition">
-            <BellIcon className="w-6" />
+          <div ref={notificationRef} className="relative">
+            <div
+              onClick={toggleNotifications}
+              className="text-gray-200 hover:text-gray-300 cursor-pointer transition relative"
+            >
+              <BellIcon className="w-6" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
+
+            <NotificationCenter
+              visible={showNotifications}
+              onClose={() => setShowNotifications(false)}
+              notifications={notifications}
+              onMarkAsRead={handleMarkAsRead}
+              onMarkAllAsRead={handleMarkAllAsRead}
+              onDelete={handleDeleteNotification}
+            />
           </div>
 
           <div onClick={toggleAccountMenu} className="flex flex-row items-center gap-2 cursor-pointer relative">

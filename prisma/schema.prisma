@@ -91,3 +91,18 @@ model WatchHistory {
   @@unique([userId, movieId])
   @@index([userId, lastWatched])
 }
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  type      String   // "new_content", "recommendation", "system", "achievement"
+  title     String
+  message   String
+  imageUrl  String?
+  link      String?  // Optional link to navigate to
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+}
