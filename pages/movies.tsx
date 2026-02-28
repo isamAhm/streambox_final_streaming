@@ -235,10 +235,10 @@ const Movies = () => {
                                                             src={item.thumbnailUrl}
                                                             alt={item.title}
                                                             draggable={false}
-                                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                                            className="object-cover w-full h-full transition-transform duration-300 md:group-hover:scale-110"
                                                         />
-                                                        {/* Hover overlay */}
-                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                                                        {/* Hover overlay - Desktop only */}
+                                                        <div className="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-3">
                                                             <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">
                                                                 {item.title}
                                                             </h3>

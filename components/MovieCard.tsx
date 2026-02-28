@@ -32,7 +32,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
   return (
     <div className="group relative h-full">
       {/* Main Card - Portrait */}
-      <div className={`relative aspect-[2/3] w-full transition-all duration-300 ease-in-out ${forceHideHover ? 'scale-100 opacity-100' : 'group-hover:scale-0 group-hover:opacity-0'}`}>
+      <div className={`relative aspect-[2/3] w-full transition-all duration-300 ease-in-out ${forceHideHover ? 'scale-100 opacity-100' : 'md:group-hover:scale-0 md:group-hover:opacity-0'}`}>
         <img
           onClick={handleOpenModal}
           src={data.thumbnailUrl}
@@ -43,12 +43,14 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
       </div>
 
       {/* Title below card */}
-      <p className={`text-white text-sm mt-2 font-semibold truncate transition-opacity duration-300 ${forceHideHover ? 'opacity-100' : 'group-hover:opacity-0'}`}>
+      <p className={`text-white text-sm mt-2 font-semibold truncate transition-opacity duration-300 ${forceHideHover ? 'opacity-100' : 'md:group-hover:opacity-0'}`}>
         {data.title}
       </p>
 
-      {/* Hover Card - Landscape with poster */}
+      {/* Hover Card - Landscape with poster - Only on desktop */}
       <div className={`
+        hidden
+        md:block
         absolute 
         top-10 
         left-0

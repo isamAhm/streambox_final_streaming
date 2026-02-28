@@ -22,11 +22,11 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
                     src={data.thumbnailUrl}
                     alt={data.title}
                     draggable={false}
-                    className="object-cover w-full h-full transition-all duration-300 group-hover:scale-105 group-hover:brightness-75"
+                    className="object-cover w-full h-full transition-all duration-300 md:group-hover:scale-105 md:group-hover:brightness-75"
                 />
 
-                {/* Minimalistic Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Minimalistic Hover Overlay - Desktop only */}
+                <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {/* Info Icon - Center */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transform scale-0 group-hover:scale-100 transition-transform duration-300 shadow-lg">
@@ -54,7 +54,7 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
             </div>
 
             {/* Title Below (visible when not hovering) */}
-            <div className="mt-2 group-hover:opacity-0 transition-opacity duration-300">
+            <div className="mt-2 md:group-hover:opacity-0 transition-opacity duration-300">
                 <h3 className="text-white text-sm font-semibold truncate">
                     {data.title}
                 </h3>

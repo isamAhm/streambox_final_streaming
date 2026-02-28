@@ -62,24 +62,34 @@ const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data, onRem
                     src={data.thumbnailUrl}
                     alt={data.title}
                     draggable={false}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                    className="object-cover w-full h-full transition-transform duration-300 md:group-hover:scale-110"
                 />
 
-                {/* Dark overlay on hover */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Dark overlay on hover - Desktop only */}
+                <div className="hidden md:block absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Remove button - top right */}
+                {/* Remove button - top right - Desktop only */}
                 <button
                     onClick={handleRemove}
                     disabled={isRemoving}
-                    className="absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-black/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 disabled:opacity-50"
+                    className="hidden md:flex absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-black/90 rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 disabled:opacity-50"
                     title="Remove from Continue Watching"
                 >
                     <XMarkIcon className="w-5 h-5 text-white" />
                 </button>
 
-                {/* Play button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Remove button - Mobile - Always visible */}
+                <button
+                    onClick={handleRemove}
+                    disabled={isRemoving}
+                    className="md:hidden absolute top-2 right-2 w-8 h-8 bg-black/70 active:bg-black/90 rounded-full flex items-center justify-center z-10 disabled:opacity-50"
+                    title="Remove from Continue Watching"
+                >
+                    <XMarkIcon className="w-5 h-5 text-white" />
+                </button>
+
+                {/* Play button overlay - Desktop only */}
+                <div className="hidden md:flex absolute inset-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors">
                         <PlayIcon className="w-6 h-6 md:w-8 md:h-8 text-black ml-1" />
                     </div>
@@ -96,7 +106,7 @@ const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data, onRem
 
             {/* Title below card */}
             <div className="mt-2">
-                <h3 className="text-white text-sm font-semibold truncate group-hover:text-gray-300 transition-colors">
+                <h3 className="text-white text-sm font-semibold truncate md:group-hover:text-gray-300 transition-colors">
                     {data.title}
                 </h3>
             </div>
