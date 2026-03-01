@@ -7,8 +7,8 @@ class MyDocument extends Document {
         <Head>
           <link rel="icon" href="/images/favicon1.png" />
 
-          {/* Security meta tags */}
-          <meta name="referrer" content="no-referrer" />
+          {/* Security meta tags - Allow referrer for YouTube embeds */}
+          <meta name="referrer" content="strict-origin-when-cross-origin" />
 
           {/* Disable text selection and copying in production */}
           {process.env.NODE_ENV === 'production' && (
