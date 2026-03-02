@@ -1,5 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useSignIn } from '@clerk/nextjs';
+import toast from 'react-hot-toast';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 import { Button } from './button';
 import Input from './Input';
 
@@ -10,6 +13,7 @@ interface ProfileModalProps {
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   const { user, isLoaded } = useUser();
+  const { signIn, isLoaded: isSignInLoaded } = useSignIn();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -22,6 +26,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [showReauthModal, setShowReauthModal] = useState(false);
+  const [lastSignInTime, setLastSignInTime] = useState<number>(0);
 
   // Initialize form data when user loads
   useEffect(() => {
@@ -31,13 +38,71 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
       setUsername(user.username || '');
       setEmail(user.primaryEmailAddress?.emailAddress || '');
       setProfileImage(user.imageUrl || '');
+
+      // Check if user has a password set (signed up with credentials vs OAuth)
+      setHasPassword(user.passwordEnabled || false);
+
+      // Store last sign-in time from session
+      const sessions = user.getSessions();
+      if (sessions && sessions.length > 0) {
+        const lastSession = sessions[0];
+        setLastSignInTime(lastSession.lastActiveAt?.getTime() || Date.now());
+      }
     }
   }, [user, isLoaded]);
+
+  // Check if session is older than 30 minutes
+  const needsReauth = useCallback(() => {
+    if (!lastSignInTime) return false;
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+    return (Date.now() - lastSignInTime) > thirtyMinutes;
+  }, [lastSignInTime]);
+
+  // Handle OAuth re-authentication
+  const handleReauthWithGoogle = useCallback(async () => {
+    if (!isSignInLoaded || !signIn) return;
+
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: window.location.pathname
+      });
+    } catch (error: any) {
+      toast.error('Re-authentication failed. Please try again.');
+    }
+  }, [signIn, isSignInLoaded]);
+
+  const handleReauthWithApple = useCallback(async () => {
+    if (!isSignInLoaded || !signIn) return;
+
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_apple',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: window.location.pathname
+      });
+    } catch (error: any) {
+      toast.error('Re-authentication failed. Please try again.');
+    }
+  }, [signIn, isSignInLoaded]);
+
+  // Handle "Set Password" button click
+  const handleSetPasswordClick = useCallback(() => {
+    if (!hasPassword && needsReauth()) {
+      // OAuth user needs re-authentication if session is old
+      setShowReauthModal(true);
+    } else {
+      // Show password form directly
+      setShowPasswordSection(true);
+    }
+  }, [hasPassword, needsReauth]);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!user || !isLoaded) return;
 
     setIsUploading(true);
+    const uploadToast = toast.loading('Uploading image...');
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -45,8 +110,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
       // Upload to Clerk's user profile image
       await user.setProfileImage({ file });
       setProfileImage(user.imageUrl);
+      toast.success('Profile image updated!', { id: uploadToast });
     } catch (error: any) {
-      alert(error?.errors?.[0]?.message || 'Failed to upload image');
+      toast.error(error?.errors?.[0]?.message || 'Failed to upload image', { id: uploadToast });
     } finally {
       setIsUploading(false);
     }
@@ -56,12 +122,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     if (!user || !isLoaded) return;
 
     setIsUploading(true);
+    const deleteToast = toast.loading('Deleting image...');
     try {
       // Delete the profile image (Clerk will revert to default)
       await user.setProfileImage({ file: null });
       setProfileImage('');
+      toast.success('Profile image deleted', { id: deleteToast });
     } catch (error: any) {
-      alert(error?.errors?.[0]?.message || 'Failed to delete image');
+      toast.error(error?.errors?.[0]?.message || 'Failed to delete image', { id: deleteToast });
     } finally {
       setIsUploading(false);
     }
@@ -70,58 +138,88 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   const handlePasswordChange = useCallback(async () => {
     if (!user || !isLoaded) return;
 
-    // Validation
-    if (!currentPassword) {
-      alert('Current password is required');
-      return;
-    }
+    // Different validation for users with vs without existing password
+    if (hasPassword) {
+      // User has password - require current password
+      if (!currentPassword) {
+        toast.error('Current password is required');
+        return;
+      }
 
-    if (!newPassword) {
-      alert('New password is required');
-      return;
-    }
+      if (!newPassword) {
+        toast.error('New password is required');
+        return;
+      }
 
-    if (newPassword !== confirmPassword) {
-      alert('New passwords do not match');
-      return;
-    }
+      if (newPassword !== confirmPassword) {
+        toast.error('New passwords do not match');
+        return;
+      }
 
-    if (newPassword.length < 8) {
-      alert('Password must be at least 8 characters long');
-      return;
-    }
+      if (newPassword.length < 8) {
+        toast.error('Password must be at least 8 characters long');
+        return;
+      }
 
-    if (currentPassword === newPassword) {
-      alert('New password must be different from current password');
-      return;
+      if (currentPassword === newPassword) {
+        toast.error('New password must be different from current password');
+        return;
+      }
+    } else {
+      // OAuth user - setting password for first time
+      if (!newPassword) {
+        toast.error('Password is required');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        toast.error('Password must be at least 8 characters long');
+        return;
+      }
     }
 
     setIsChangingPassword(true);
+    const passwordToast = toast.loading(hasPassword ? 'Updating password...' : 'Setting password...');
     try {
-      await user.updatePassword({
-        currentPassword,
-        newPassword
-      });
+      if (hasPassword) {
+        // Update existing password
+        await user.updatePassword({
+          currentPassword,
+          newPassword
+        });
+      } else {
+        // Set password for OAuth user
+        await user.updatePassword({
+          newPassword
+        });
+        setHasPassword(true);
+      }
 
       // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setShowPasswordSection(false);
-      alert('Password updated successfully');
+      toast.success(hasPassword ? 'Password updated successfully!' : 'Password set successfully!', { id: passwordToast });
     } catch (error: any) {
       console.error('Password change error:', error);
       const errorMessage = error?.errors?.[0]?.message || 'Failed to change password';
-      alert(errorMessage);
+      toast.error(errorMessage, { id: passwordToast });
     } finally {
       setIsChangingPassword(false);
     }
-  }, [user, isLoaded, currentPassword, newPassword, confirmPassword]);
+  }, [user, isLoaded, hasPassword, currentPassword, newPassword, confirmPassword]);
 
   const handleUpdate = useCallback(async () => {
     if (!user || !isLoaded) return;
 
     setIsUpdating(true);
+    const updateToast = toast.loading('Updating profile...');
     try {
       // Prepare update data
       const updateData: any = {
@@ -142,17 +240,66 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
         await user.createEmailAddress({ email });
       }
 
+      toast.success('Profile updated successfully!', { id: updateToast });
       onClose();
     } catch (error: any) {
       console.error('Profile update error:', error);
       const errorMessage = error?.errors?.[0]?.message || 'Failed to update profile';
-      alert(errorMessage);
+      toast.error(errorMessage, { id: updateToast });
     } finally {
       setIsUpdating(false);
     }
   }, [user, isLoaded, firstName, lastName, username, email, onClose]);
 
   if (!visible) return null;
+
+  // Re-authentication Modal
+  if (showReauthModal) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-900 rounded-lg p-8 w-full max-w-md mx-4">
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+
+            <h2 className="text-white text-2xl font-bold mb-2">Confirm Your Identity</h2>
+            <p className="text-gray-400 text-center mb-6">
+              For security, please confirm your identity before adding a password.
+            </p>
+
+            <div className="w-full space-y-3">
+              <Button
+                onClick={handleReauthWithGoogle}
+                className="w-full bg-white hover:bg-gray-100 text-gray-900 flex items-center justify-center gap-3"
+              >
+                <FcGoogle size={24} />
+                Continue with Google
+              </Button>
+
+              <Button
+                onClick={handleReauthWithApple}
+                className="w-full bg-black hover:bg-gray-900 text-white border border-gray-700 flex items-center justify-center gap-3"
+              >
+                <FaApple size={24} />
+                Continue with Apple
+              </Button>
+
+              <Button
+                onClick={() => setShowReauthModal(false)}
+                variant="outline"
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 mt-4"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -241,46 +388,86 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white text-lg font-semibold">Password</h3>
               <Button
-                onClick={() => setShowPasswordSection(!showPasswordSection)}
+                onClick={() => {
+                  if (showPasswordSection) {
+                    setShowPasswordSection(false);
+                  } else if (!hasPassword) {
+                    handleSetPasswordClick();
+                  } else {
+                    setShowPasswordSection(true);
+                  }
+                }}
                 variant="outline"
                 className="border-gray-600 text-gray-300 hover:bg-gray-800 text-sm px-3 py-1"
               >
-                {showPasswordSection ? 'Cancel' : 'Change Password'}
+                {showPasswordSection ? 'Cancel' : hasPassword ? 'Change Password' : 'Set Password'}
               </Button>
             </div>
 
             {showPasswordSection && (
               <div className="space-y-3">
-                <Input
-                  id="currentPassword"
-                  label="Current Password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e: any) => setCurrentPassword(e.target.value)}
-                />
+                {hasPassword ? (
+                  <>
+                    {/* User has password - show current, new, confirm */}
+                    <Input
+                      id="currentPassword"
+                      label="Current Password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e: any) => setCurrentPassword(e.target.value)}
+                    />
 
-                <Input
-                  id="newPassword"
-                  label="New Password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e: any) => setNewPassword(e.target.value)}
-                />
+                    <Input
+                      id="newPassword"
+                      label="New Password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e: any) => setNewPassword(e.target.value)}
+                    />
 
-                <Input
-                  id="confirmPassword"
-                  label="Confirm New Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e: any) => setConfirmPassword(e.target.value)}
-                />
+                    <Input
+                      id="confirmPassword"
+                      label="Confirm New Password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e: any) => setConfirmPassword(e.target.value)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* OAuth user - show set password, confirm */}
+                    <p className="text-gray-400 text-sm mb-2">
+                      You signed in with a social account. Set a password to enable email login.
+                    </p>
+
+                    <Input
+                      id="newPassword"
+                      label="Set Password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e: any) => setNewPassword(e.target.value)}
+                    />
+
+                    <Input
+                      id="confirmPassword"
+                      label="Confirm Password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e: any) => setConfirmPassword(e.target.value)}
+                    />
+                  </>
+                )}
+
+                <p className="text-gray-400 text-xs">
+                  Password must be at least 8 characters long
+                </p>
 
                 <Button
                   onClick={handlePasswordChange}
-                  disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                  disabled={isChangingPassword || !newPassword || !confirmPassword || (hasPassword && !currentPassword)}
                   className="w-full bg-green-600 hover:bg-green-700 text-sm"
                 >
-                  {isChangingPassword ? 'Changing...' : 'Update Password'}
+                  {isChangingPassword ? (hasPassword ? 'Changing...' : 'Setting...') : (hasPassword ? 'Update Password' : 'Set Password')}
                 </Button>
               </div>
             )}

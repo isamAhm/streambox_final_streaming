@@ -5,7 +5,7 @@ import { getAuth } from '@clerk/nextjs/server';
 import { useRouter } from 'next/router';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 import Input from '@/components/Input';
 import Head from 'next/head';
@@ -250,30 +250,6 @@ const Auth = () => {
       <Head>
         <title>StreamBox - Login or Register</title>
       </Head>
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1f2937',
-            color: '#fff',
-            borderRadius: '10px',
-            padding: '16px',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(0,0,0,0.7)_80%)]">
         <div className="bg-black w-full h-full bg-opacity-50">
           <nav className="px-12 py-5 flex justify-center items-center relative">
