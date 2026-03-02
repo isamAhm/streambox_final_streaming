@@ -5,6 +5,7 @@ import { getAuth } from '@clerk/nextjs/server';
 import { useRouter } from 'next/router';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
+import toast, { Toaster } from 'react-hot-toast';
 
 import Input from '@/components/Input';
 import Head from 'next/head';
@@ -30,15 +31,27 @@ export async function getServerSideProps(context: NextPageContext) {
 const Auth = () => {
   const router = useRouter();
 
+  // Login fields
+  const [emailOrUsername, setEmailOrUsername] = useState('');
+
+  // Register fields
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
+
+  // Shared field
   const [password, setPassword] = useState('');
 
   const [variant, setVariant] = useState('login');
 
   const toggleVariant = useCallback(() => {
     setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login');
+    // Clear fields when switching
+    setEmail('');
+    setEmailOrUsername('');
+    setUsername('');
+    setName('');
+    setPassword('');
   }, []);
 
   const { isLoaded: isSignInLoaded, signIn, setActive } = useSignIn();
@@ -50,15 +63,17 @@ const Auth = () => {
 
       // Validate required fields
       if (!password) {
-        alert('Password is required');
+        toast.error('Password is required');
         return;
       }
 
-      const identifier = email.trim() || username.trim();
+      const identifier = emailOrUsername.trim();
       if (!identifier) {
-        alert('Email or username is required');
+        toast.error('Email or username is required');
         return;
       }
+
+      const loadingToast = toast.loading('Signing in...');
 
       const result = await signIn.create({
         identifier,
@@ -67,67 +82,138 @@ const Auth = () => {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
+        toast.success('Welcome back!', { id: loadingToast });
         router.push('/profiles');
       } else {
-        console.error('Sign in incomplete:', result);
-        alert('Sign in failed. Please try again.');
+        toast.error('Sign in failed. Please check your credentials.', { id: loadingToast });
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error?.errors?.[0]?.message || error?.errors?.[0]?.longMessage || 'Invalid credentials';
-      alert(errorMessage);
+
+      // Better error messages
+      let errorMessage = 'Invalid credentials. Please try again.';
+
+      if (error?.errors?.[0]) {
+        const clerkError = error.errors[0];
+        if (clerkError.code === 'form_identifier_not_found') {
+          errorMessage = 'No account found with this email or username.';
+        } else if (clerkError.code === 'form_password_incorrect') {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (clerkError.message) {
+          errorMessage = clerkError.message;
+        }
+      }
+
+      toast.error(errorMessage);
     }
-  }, [username, email, password, router, signIn, isSignInLoaded, setActive]);
+  }, [emailOrUsername, password, router, signIn, isSignInLoaded, setActive]);
 
   const register = useCallback(async () => {
     try {
       if (!isSignUpLoaded) return;
 
       // Validate required fields
+      if (!name?.trim()) {
+        toast.error('Full name is required');
+        return;
+      }
+
       if (!email || !password) {
-        alert('Email and password are required');
+        toast.error('Email and password are required');
         return;
       }
 
       if (password.length < 8) {
-        alert('Password must be at least 8 characters long');
+        toast.error('Password must be at least 8 characters long');
         return;
       }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+
+      const loadingToast = toast.loading('Creating your account...');
 
       const signUpData: any = {
         emailAddress: email.trim(),
         password
       };
 
+      // Add name (required)
+      const nameParts = name.trim().split(' ');
+      signUpData.firstName = nameParts[0];
+      if (nameParts.length > 1) {
+        signUpData.lastName = nameParts.slice(1).join(' ');
+      }
+
+      // Add username if provided (optional)
       if (username?.trim()) {
         signUpData.username = username.trim();
       }
 
-      if (name?.trim()) {
-        const nameParts = name.trim().split(' ');
-        signUpData.firstName = nameParts[0];
-        if (nameParts.length > 1) {
-          signUpData.lastName = nameParts.slice(1).join(' ');
-        }
-      }
-
       const result = await signUp.create(signUpData);
 
+      // Handle different signup statuses
       if (result.status === 'complete') {
         await setActiveSignUp({ session: result.createdSessionId });
+        toast.success('Account created successfully!', { id: loadingToast });
         router.push('/profiles');
       } else if (result.status === 'missing_requirements') {
-        // Handle email verification
+        // Email verification required
         await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-        alert('Please check your email for a verification code.');
+        toast.success('Verification code sent to your email', { id: loadingToast });
+
+        // Prompt user for verification code
+        const code = prompt('Please enter the verification code sent to your email:');
+
+        if (code) {
+          try {
+            const verifyToast = toast.loading('Verifying...');
+            const verifyResult = await signUp.attemptEmailAddressVerification({
+              code: code.trim()
+            });
+
+            if (verifyResult.status === 'complete') {
+              await setActiveSignUp({ session: verifyResult.createdSessionId });
+              toast.success('Email verified!', { id: verifyToast });
+              router.push('/profiles');
+            } else {
+              toast.error('Verification incomplete. Please try again.', { id: verifyToast });
+            }
+          } catch (verifyError: any) {
+            console.error('Verification error:', verifyError);
+            toast.error('Invalid verification code. Please try again.');
+          }
+        }
       } else {
         console.log('Sign up status:', result.status);
-        alert('Registration incomplete. Please check your email for verification.');
+        toast.info('Please check your email for verification.', { id: loadingToast });
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      const errorMessage = error?.errors?.[0]?.message || error?.errors?.[0]?.longMessage || 'Registration failed';
-      alert(errorMessage);
+
+      // Better error messages
+      let errorMessage = 'Registration failed. Please try again.';
+
+      if (error?.errors?.[0]) {
+        const clerkError = error.errors[0];
+        if (clerkError.code === 'form_identifier_exists') {
+          errorMessage = 'An account with this email already exists.';
+        } else if (clerkError.code === 'form_password_pwned') {
+          errorMessage = 'This password has been found in a data breach. Please choose a different password.';
+        } else if (clerkError.code === 'form_param_format_invalid') {
+          errorMessage = 'Invalid email format. Please check your email address.';
+        } else if (clerkError.code === 'form_username_invalid') {
+          errorMessage = 'Invalid username. Use only letters, numbers, and underscores.';
+        } else if (clerkError.message) {
+          errorMessage = clerkError.message;
+        }
+      }
+
+      toast.error(errorMessage);
     }
   }, [email, username, name, password, signUp, isSignUpLoaded, router, setActiveSignUp]);
 
@@ -141,7 +227,7 @@ const Auth = () => {
       });
     } catch (error: any) {
       console.error('Google sign in error:', error);
-      alert(error?.errors?.[0]?.message || 'Google sign in failed');
+      toast.error(error?.errors?.[0]?.message || 'Google sign in failed');
     }
   }, [signIn, isSignInLoaded]);
 
@@ -155,7 +241,7 @@ const Auth = () => {
       });
     } catch (error: any) {
       console.error('Apple sign in error:', error);
-      alert(error?.errors?.[0]?.message || 'Apple sign in failed');
+      toast.error(error?.errors?.[0]?.message || 'Apple sign in failed');
     }
   }, [signIn, isSignInLoaded]);
 
@@ -164,6 +250,30 @@ const Auth = () => {
       <Head>
         <title>StreamBox - Login or Register</title>
       </Head>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            borderRadius: '10px',
+            padding: '16px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(0,0,0,0.7)_80%)]">
         <div className="bg-black w-full h-full bg-opacity-50">
           <nav className="px-12 py-5 flex justify-center items-center relative">
@@ -184,36 +294,60 @@ const Auth = () => {
                 {variant === 'login' ? 'Sign in' : 'Register'}
               </h2>
               <div className="flex flex-col gap-4">
-                {variant === 'register' && (
-                  <Input
-                    id="name"
-                    type="text"
-                    label="Full Name"
-                    value={name}
-                    onChange={(e: any) => setName(e.target.value)}
-                  />
+                {variant === 'login' ? (
+                  <>
+                    {/* Login Form - 2 fields only */}
+                    <Input
+                      id="emailOrUsername"
+                      type="text"
+                      label="Email or Username"
+                      value={emailOrUsername}
+                      onChange={(e: any) => setEmailOrUsername(e.target.value)}
+                    />
+                    <Input
+                      type="password"
+                      id="password"
+                      label="Password"
+                      value={password}
+                      onChange={(e: any) => setPassword(e.target.value)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* Register Form */}
+                    <Input
+                      id="name"
+                      type="text"
+                      label="Full Name *"
+                      value={name}
+                      onChange={(e: any) => setName(e.target.value)}
+                    />
+                    <Input
+                      id="username"
+                      type="text"
+                      label="Username (Optional)"
+                      value={username}
+                      onChange={(e: any) => setUsername(e.target.value)}
+                    />
+                    <Input
+                      id="email"
+                      type="email"
+                      label="Email *"
+                      value={email}
+                      onChange={(e: any) => setEmail(e.target.value)}
+                    />
+                    <Input
+                      type="password"
+                      id="password"
+                      label="Password *"
+                      value={password}
+                      onChange={(e: any) => setPassword(e.target.value)}
+                    />
+                    <p className="text-neutral-400 text-xs -mt-2">
+                      Password must be at least 8 characters long
+                    </p>
+                  </>
                 )}
-                <Input
-                  id="username"
-                  type="text"
-                  label="Username"
-                  value={username}
-                  onChange={(e: any) => setUsername(e.target.value)}
-                />
-                <Input
-                  id="email"
-                  type="email"
-                  label="Email address"
-                  value={email}
-                  onChange={(e: any) => setEmail(e.target.value)}
-                />
-                <Input
-                  type="password"
-                  id="password"
-                  label="Password"
-                  value={password}
-                  onChange={(e: any) => setPassword(e.target.value)}
-                />
               </div>
               <button onClick={variant === 'login' ? login : register} className="bg-blue-900 py-3 text-white rounded-md w-full mt-10 hover:bg-blue-900/85 transition">
                 {variant === 'login' ? 'Login' : 'Sign up'}

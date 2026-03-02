@@ -29,23 +29,23 @@ const serverAuth = async (req: NextApiRequest) => {
     currentUser = await prismadb.user.create({
       data: {
         email: primaryEmail,
-        name: clerkUser.username || clerkUser.firstName || 'User',
+        name: clerkUser.firstName || clerkUser.username || 'User',
         image: clerkUser.imageUrl || undefined,
         favoriteIds: [],
       },
     });
   } else {
-    // Light sync of display info
-    const desiredName = clerkUser.username || clerkUser.firstName || currentUser.name;
+    // Light sync of display info - prioritize firstName
+    const desiredName = clerkUser.firstName || clerkUser.username || currentUser.name;
     const desiredImage = clerkUser.imageUrl || currentUser.image || undefined;
     const hasChanges = desiredName !== currentUser.name || desiredImage !== currentUser.image;
-    
+
     if (hasChanges) {
       currentUser = await prismadb.user.update({
         where: { email: primaryEmail },
-        data: { 
-          name: desiredName, 
-          image: desiredImage 
+        data: {
+          name: desiredName,
+          image: desiredImage
         },
       });
     }
