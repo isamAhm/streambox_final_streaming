@@ -190,7 +190,7 @@ const Auth = () => {
         }
       } else {
         console.log('Sign up status:', result.status);
-        toast.info('Please check your email for verification.', { id: loadingToast });
+        toast('Please check your email for verification.', { id: loadingToast, icon: 'ℹ️' });
       }
     } catch (error: any) {
       console.error('Registration error:', error);

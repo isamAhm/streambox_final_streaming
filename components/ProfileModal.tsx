@@ -32,23 +32,32 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
   // Initialize form data when user loads
   useEffect(() => {
-    if (user && isLoaded && visible) {
-      setFirstName(user.firstName || '');
-      setLastName(user.lastName || '');
-      setUsername(user.username || '');
-      setEmail(user.primaryEmailAddress?.emailAddress || '');
-      setProfileImage(user.imageUrl || '');
+    const initializeForm = async () => {
+      if (user && isLoaded && visible) {
+        setFirstName(user.firstName || '');
+        setLastName(user.lastName || '');
+        setUsername(user.username || '');
+        setEmail(user.primaryEmailAddress?.emailAddress || '');
+        setProfileImage(user.imageUrl || '');
 
-      // Check if user has a password set (signed up with credentials vs OAuth)
-      setHasPassword(user.passwordEnabled || false);
+        // Check if user has a password set (signed up with credentials vs OAuth)
+        setHasPassword(user.passwordEnabled || false);
 
-      // Store last sign-in time from session
-      const sessions = user.getSessions();
-      if (sessions && sessions.length > 0) {
-        const lastSession = sessions[0];
-        setLastSignInTime(lastSession.lastActiveAt?.getTime() || Date.now());
+        // Store last sign-in time from session
+        try {
+          const sessions = await user.getSessions();
+          if (sessions && sessions.length > 0) {
+            const lastSession = sessions[0];
+            setLastSignInTime(lastSession.lastActiveAt?.getTime() || Date.now());
+          }
+        } catch (error) {
+          console.error('Error getting sessions:', error);
+          setLastSignInTime(Date.now());
+        }
       }
-    }
+    };
+
+    initializeForm();
   }, [user, isLoaded, visible]);
 
   // Reset form when modal closes
@@ -268,7 +277,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user, isLoaded, firstName, lastName, username, email, onClose]);
+  }, [user, isLoaded, firstName, lastName, username, email, handleClose]);
 
   if (!visible) return null;
 
