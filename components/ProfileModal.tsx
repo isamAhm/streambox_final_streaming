@@ -32,7 +32,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
   // Initialize form data when user loads
   useEffect(() => {
-    if (user && isLoaded) {
+    if (user && isLoaded && visible) {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setUsername(user.username || '');
@@ -49,7 +49,26 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
         setLastSignInTime(lastSession.lastActiveAt?.getTime() || Date.now());
       }
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, visible]);
+
+  // Reset form when modal closes
+  const handleClose = useCallback(() => {
+    if (user && isLoaded) {
+      // Reset all fields to original values
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setUsername(user.username || '');
+      setEmail(user.primaryEmailAddress?.emailAddress || '');
+      setProfileImage(user.imageUrl || '');
+
+      // Clear password fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordSection(false);
+    }
+    onClose();
+  }, [user, isLoaded, onClose]);
 
   // Check if session is older than 30 minutes
   const needsReauth = useCallback(() => {
@@ -241,7 +260,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
       }
 
       toast.success('Profile updated successfully!', { id: updateToast });
-      onClose();
+      handleClose();
     } catch (error: any) {
       console.error('Profile update error:', error);
       const errorMessage = error?.errors?.[0]?.message || 'Failed to update profile';
@@ -257,7 +276,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   if (showReauthModal) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-900 rounded-lg p-8 w-full max-w-md mx-4">
+        <div className="bg-[#00000099]/70 backdrop-blur-md border-2 border-gray-800 rounded-md p-8 w-full max-w-md mx-4">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +309,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
               <Button
                 onClick={() => setShowReauthModal(false)}
                 variant="outline"
-                className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 mt-4"
+                className="w-full border-white/20 bg-gray-800/50 hover:bg-gray-800 text-white mt-4"
               >
                 Cancel
               </Button>
@@ -303,7 +322,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-8 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#00000099]/70 backdrop-blur-md border-2 border-gray-800 rounded-md p-8 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-white text-2xl font-bold mb-6">Edit Profile</h2>
 
         {/* Profile Picture Section */}
@@ -312,7 +331,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
             <img
               src={profileImage || '/images/default-blue.png'}
               alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-2 border-gray-600"
+              className="w-24 h-24 rounded-full object-cover border-2 border-gray-800"
             />
             <div className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition">
               <input
@@ -384,7 +403,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
           />
 
           {/* Password Change Section */}
-          <div className="border-t border-gray-600 pt-4">
+          <div className="border-t border-gray-800 pt-4 mt-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white text-lg font-semibold">Password</h3>
               <Button
@@ -398,7 +417,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
                   }
                 }}
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-800 text-sm px-3 py-1"
+                className="border-white/20 bg-gray-800/50 hover:bg-gray-800 text-white text-sm px-3 py-1"
               >
                 {showPasswordSection ? 'Cancel' : hasPassword ? 'Change Password' : 'Set Password'}
               </Button>
@@ -478,15 +497,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
           <Button
             onClick={handleUpdate}
             disabled={isUpdating || isUploading || isChangingPassword}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 hover:bg-blue-700 border-2 border-white/20 bg-blue-700/50 text-white hover:bg-blue-700/60"
           >
             {isUpdating ? 'Updating...' : 'Update Profile'}
           </Button>
 
           <Button
-            onClick={onClose}
+            onClick={handleClose}
             variant="outline"
-            className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+            className="flex-1 bg-red-600/20 hover:bg-red-600/30 border-white/20 text-white"
           >
             Cancel
           </Button>
