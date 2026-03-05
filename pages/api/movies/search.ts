@@ -126,17 +126,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 try {
                     const details = await tmdbService.getTVShowDetails(show.id);
 
+                    // Generate a fallback IMDB ID if not available (for display purposes)
+                    const imdbId = details.external_ids?.imdb_id || `tmdb_tv_${details.id}`;
+
                     if (!details.external_ids?.imdb_id) {
-                        console.log(`Skipping TV show ${details.name} - no IMDB ID`);
-                        continue;
+                        console.log(`TV show ${details.name} has no IMDB ID, using fallback: ${imdbId}`);
                     }
 
                     const showData = tmdbService.convertToTVShow(details);
-                    const videoUrl = streamingService.getTVShowStreamUrl(details.external_ids.imdb_id, 1, 1, details.id);
+                    const videoUrl = details.external_ids?.imdb_id
+                        ? streamingService.getTVShowStreamUrl(details.external_ids.imdb_id, 1, 1, details.id)
+                        : ''; // Empty URL if no IMDB ID
 
                     // Upsert TV show to database
                     const savedShow = await prismadb.movie.upsert({
-                        where: { imdbId: details.external_ids.imdb_id },
+                        where: { imdbId: imdbId },
                         update: {
                             title: showData.title,
                             description: showData.description,
@@ -156,7 +160,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             genre: showData.genre,
                             duration: showData.duration,
                             videoUrl: videoUrl,
-                            imdbId: details.external_ids.imdb_id,
+                            imdbId: imdbId,
                             tmdbId: showData.tmdbId,
                             year: showData.year,
                             rating: showData.rating,
