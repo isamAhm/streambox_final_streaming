@@ -53,125 +53,177 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Search movies
         if (type === 'movie' || type === 'all') {
-            const movieResults = await tmdbService.searchMovies(query, pageNum);
+            try {
+                const movieResults = await tmdbService.searchMovies(query, pageNum);
 
-            // Fetch details and save each movie
-            for (const movie of movieResults.results.slice(0, 20)) { // Limit to 20 results
-                try {
-                    const details = await tmdbService.getMovieDetails(movie.id);
+                // Reduce to 10 results to avoid timeout on Vercel
+                const moviesToProcess = movieResults.results.slice(0, 10);
 
-                    if (!details.imdb_id) {
-                        console.log(`Skipping movie ${details.title} - no IMDB ID`);
-                        continue;
-                    }
+                // Fetch details and save each movie
+                for (const movie of moviesToProcess) {
+                    try {
+                        // Wrap the entire operation in a timeout
+                        const processMovie = async () => {
+                            const details = await tmdbService.getMovieDetails(movie.id);
 
-                    const movieData = tmdbService.convertToMovie(details);
-                    const videoUrl = streamingService.getMovieStreamUrl(details.imdb_id, details.id);
-
-                    // Check if movie already exists
-                    const existing = await prismadb.movie.findFirst({
-                        where: { imdbId: details.imdb_id }
-                    });
-
-                    let savedMovie;
-                    if (existing) {
-                        // Update existing movie
-                        savedMovie = await prismadb.movie.update({
-                            where: { id: existing.id },
-                            data: {
-                                title: movieData.title,
-                                description: movieData.description,
-                                thumbnailUrl: movieData.thumbnailUrl,
-                                genre: movieData.genre,
-                                duration: movieData.duration,
-                                videoUrl: videoUrl,
-                                tmdbId: movieData.tmdbId,
-                                year: movieData.year,
-                                rating: movieData.rating,
-                                type: movieData.type,
+                            if (!details.imdb_id) {
+                                console.log(`Skipping movie ${details.title} - no IMDB ID`);
+                                return null;
                             }
-                        });
-                    } else {
-                        // Create new movie
-                        savedMovie = await prismadb.movie.create({
-                            data: {
-                                title: movieData.title,
-                                description: movieData.description,
-                                thumbnailUrl: movieData.thumbnailUrl,
-                                genre: movieData.genre,
-                                duration: movieData.duration,
-                                videoUrl: videoUrl,
-                                imdbId: details.imdb_id,
-                                tmdbId: movieData.tmdbId,
-                                year: movieData.year,
-                                rating: movieData.rating,
-                                type: movieData.type,
-                            }
-                        });
-                    }
 
-                    savedMovies.push(savedMovie);
-                } catch (error) {
-                    console.error(`Error processing movie ${movie.title}:`, error);
+                            const movieData = tmdbService.convertToMovie(details);
+                            const videoUrl = streamingService.getMovieStreamUrl(details.imdb_id, details.id);
+
+                            // Check if movie already exists
+                            const existing = await prismadb.movie.findFirst({
+                                where: { imdbId: details.imdb_id }
+                            });
+
+                            let savedMovie;
+                            if (existing) {
+                                // Update existing movie
+                                savedMovie = await prismadb.movie.update({
+                                    where: { id: existing.id },
+                                    data: {
+                                        title: movieData.title,
+                                        description: movieData.description,
+                                        thumbnailUrl: movieData.thumbnailUrl,
+                                        genre: movieData.genre,
+                                        duration: movieData.duration,
+                                        videoUrl: videoUrl,
+                                        tmdbId: movieData.tmdbId,
+                                        year: movieData.year,
+                                        rating: movieData.rating,
+                                        type: movieData.type,
+                                    }
+                                });
+                            } else {
+                                // Create new movie
+                                savedMovie = await prismadb.movie.create({
+                                    data: {
+                                        title: movieData.title,
+                                        description: movieData.description,
+                                        thumbnailUrl: movieData.thumbnailUrl,
+                                        genre: movieData.genre,
+                                        duration: movieData.duration,
+                                        videoUrl: videoUrl,
+                                        imdbId: details.imdb_id,
+                                        tmdbId: movieData.tmdbId,
+                                        year: movieData.year,
+                                        rating: movieData.rating,
+                                        type: movieData.type,
+                                    }
+                                });
+                            }
+
+                            return savedMovie;
+                        };
+
+                        // Create timeout promise (3 seconds per movie)
+                        const timeoutPromise = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('Operation timeout')), 3000);
+                        });
+
+                        // Race between processing and timeout
+                        const savedMovie = await Promise.race([
+                            processMovie(),
+                            timeoutPromise
+                        ]);
+
+                        if (savedMovie) {
+                            savedMovies.push(savedMovie);
+                        }
+                    } catch (error: any) {
+                        console.error(`Error processing movie ${movie.title}:`, error.message);
+                        // Continue with next movie instead of failing entire search
+                    }
                 }
+            } catch (error: any) {
+                console.error('Movie search error:', error.message);
+                // Don't fail entire search if movies fail, just log and continue
             }
         }
 
         // Search TV shows
         if (type === 'tv' || type === 'all') {
-            const tvResults = await tmdbService.searchTVShows(query, pageNum);
+            try {
+                const tvResults = await tmdbService.searchTVShows(query, pageNum);
 
-            // Fetch details and save each TV show
-            for (const show of tvResults.results.slice(0, 20)) { // Limit to 20 results
-                try {
-                    const details = await tmdbService.getTVShowDetails(show.id);
+                // Reduce to 10 results to avoid timeout on Vercel
+                const showsToProcess = tvResults.results.slice(0, 10);
 
-                    // Generate a fallback IMDB ID if not available (for display purposes)
-                    const imdbId = details.external_ids?.imdb_id || `tmdb_tv_${details.id}`;
+                // Process TV shows with timeout protection
+                for (const show of showsToProcess) {
+                    try {
+                        // Wrap the entire operation in a timeout
+                        const processShow = async () => {
+                            const details = await tmdbService.getTVShowDetails(show.id);
 
-                    if (!details.external_ids?.imdb_id) {
-                        console.log(`TV show ${details.name} has no IMDB ID, using fallback: ${imdbId}`);
+                            // Generate a fallback IMDB ID if not available (for display purposes)
+                            const imdbId = details.external_ids?.imdb_id || `tmdb_tv_${details.id}`;
+
+                            if (!details.external_ids?.imdb_id) {
+                                console.log(`TV show ${details.name} has no IMDB ID, using fallback: ${imdbId}`);
+                            }
+
+                            const showData = tmdbService.convertToTVShow(details);
+                            const videoUrl = details.external_ids?.imdb_id
+                                ? streamingService.getTVShowStreamUrl(details.external_ids.imdb_id, 1, 1, details.id)
+                                : ''; // Empty URL if no IMDB ID
+
+                            // Upsert TV show to database with timeout
+                            const savedShow = await prismadb.movie.upsert({
+                                where: { imdbId: imdbId },
+                                update: {
+                                    title: showData.title,
+                                    description: showData.description,
+                                    thumbnailUrl: showData.thumbnailUrl,
+                                    genre: showData.genre,
+                                    duration: showData.duration,
+                                    videoUrl: videoUrl,
+                                    tmdbId: showData.tmdbId,
+                                    year: showData.year,
+                                    rating: showData.rating,
+                                    type: showData.type,
+                                },
+                                create: {
+                                    title: showData.title,
+                                    description: showData.description,
+                                    thumbnailUrl: showData.thumbnailUrl,
+                                    genre: showData.genre,
+                                    duration: showData.duration,
+                                    videoUrl: videoUrl,
+                                    imdbId: imdbId,
+                                    tmdbId: showData.tmdbId,
+                                    year: showData.year,
+                                    rating: showData.rating,
+                                    type: showData.type,
+                                },
+                            });
+
+                            return savedShow;
+                        };
+
+                        // Create timeout promise (3 seconds per show)
+                        const timeoutPromise = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('Operation timeout')), 3000);
+                        });
+
+                        // Race between processing and timeout
+                        const savedShow = await Promise.race([
+                            processShow(),
+                            timeoutPromise
+                        ]);
+
+                        savedMovies.push(savedShow);
+                    } catch (error: any) {
+                        console.error(`Error processing TV show ${show.name}:`, error.message);
+                        // Continue with next show instead of failing entire search
                     }
-
-                    const showData = tmdbService.convertToTVShow(details);
-                    const videoUrl = details.external_ids?.imdb_id
-                        ? streamingService.getTVShowStreamUrl(details.external_ids.imdb_id, 1, 1, details.id)
-                        : ''; // Empty URL if no IMDB ID
-
-                    // Upsert TV show to database
-                    const savedShow = await prismadb.movie.upsert({
-                        where: { imdbId: imdbId },
-                        update: {
-                            title: showData.title,
-                            description: showData.description,
-                            thumbnailUrl: showData.thumbnailUrl,
-                            genre: showData.genre,
-                            duration: showData.duration,
-                            videoUrl: videoUrl,
-                            tmdbId: showData.tmdbId,
-                            year: showData.year,
-                            rating: showData.rating,
-                            type: showData.type,
-                        },
-                        create: {
-                            title: showData.title,
-                            description: showData.description,
-                            thumbnailUrl: showData.thumbnailUrl,
-                            genre: showData.genre,
-                            duration: showData.duration,
-                            videoUrl: videoUrl,
-                            imdbId: imdbId,
-                            tmdbId: showData.tmdbId,
-                            year: showData.year,
-                            rating: showData.rating,
-                            type: showData.type,
-                        },
-                    });
-
-                    savedMovies.push(savedShow);
-                } catch (error) {
-                    console.error(`Error processing TV show ${show.name}:`, error);
                 }
+            } catch (error: any) {
+                console.error('TV show search error:', error.message);
+                // Don't fail entire search if TV shows fail, just log and continue
             }
         }
 
