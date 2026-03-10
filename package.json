@@ -9,6 +9,10 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "populate": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/populate-database.ts",
+    "populate:small": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/populate-database.ts small",
+    "populate:large": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/populate-database.ts large",
+    "create-indexes": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/create-text-indexes.ts",
     "verify-deploy": "node verify-deployment-ready.js",
     "prepare-deploy": "npx prisma generate && npx prisma db push && npm run build"
   },

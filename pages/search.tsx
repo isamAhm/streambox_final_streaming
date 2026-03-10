@@ -4,6 +4,7 @@ import { NextPageContext } from 'next';
 import { getAuth } from '@clerk/nextjs/server';
 import Navbar from '@/components/Navbar';
 import SearchMovieCard from '@/components/SearchMovieCard';
+import SearchMovieCardSkeleton from '@/components/SearchMovieCardSkeleton';
 import InfoModal from '@/components/InfoModal';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import axios from 'axios';
@@ -47,7 +48,11 @@ const Search = () => {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [isEnriching, setIsEnriching] = useState(false);
+    const [showSkeletons, setShowSkeletons] = useState(false);
+    const [pollCount, setPollCount] = useState(0);
     const { isOpen, closeModal } = useInfoModalStore();
+    const abortControllerRef = React.useRef<AbortController | null>(null);
 
     useEffect(() => {
         if (q && typeof q === 'string') {
@@ -56,16 +61,97 @@ const Search = () => {
         }
     }, [q]);
 
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
+
+    // Poll for new results while enriching
+    useEffect(() => {
+        if (!isEnriching || !q || typeof q !== 'string') return;
+
+        // Poll every 2 seconds, max 5 times (10 seconds total)
+        if (pollCount >= 5) {
+            setIsEnriching(false);
+            setShowSkeletons(false);
+            return;
+        }
+
+        const pollTimer = setTimeout(() => {
+            pollForNewResults(q);
+        }, 2000);
+
+        return () => clearTimeout(pollTimer);
+    }, [isEnriching, pollCount, q]);
+
+    const pollForNewResults = async (query: string) => {
+        try {
+            const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(query)}&type=all`, {
+                signal: abortControllerRef.current?.signal
+            });
+            const newResults = response.data.results || [];
+
+            // Only update if we got more results
+            if (newResults.length > results.length) {
+                setResults(newResults);
+                console.log(`📊 Polled: Found ${newResults.length - results.length} new results`);
+            }
+
+            setPollCount(prev => prev + 1);
+
+            // Check if still enriching
+            if (!response.data.enriching) {
+                setIsEnriching(false);
+                setShowSkeletons(false);
+            }
+        } catch (error) {
+            if (axios.isCancel(error)) {
+                console.log('Poll request cancelled');
+                return;
+            }
+            console.error('Poll error:', error);
+            setPollCount(prev => prev + 1);
+        }
+    };
+
     const performSearch = async (query: string) => {
         if (!query.trim()) return;
 
+        // Cancel any ongoing requests
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller for this search
+        abortControllerRef.current = new AbortController();
+
         setIsLoading(true);
         setHasSearched(true);
+        setPollCount(0);
+        setIsEnriching(false);
+        setShowSkeletons(false);
 
         try {
-            const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(query)}&type=all`);
+            const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(query)}&type=all`, {
+                signal: abortControllerRef.current.signal
+            });
             setResults(response.data.results || []);
+
+            // Check if background enrichment is happening
+            if (response.data.enriching) {
+                setIsEnriching(true);
+                setShowSkeletons(true);
+                console.log('🔄 Background enrichment active, polling for new results...');
+            }
         } catch (error) {
+            if (axios.isCancel(error)) {
+                console.log('Search request cancelled');
+                return;
+            }
             console.error('Search error:', error);
             setResults([]);
         } finally {
@@ -116,11 +202,19 @@ const Search = () => {
                 {/* Results */}
                 {!isLoading && hasSearched && (
                     <>
-                        {results.length > 0 ? (
+                        {results.length > 0 || showSkeletons ? (
                             <>
-                                <h2 className="text-white text-2xl md:text-3xl font-semibold mb-6">
-                                    Search Results for &quot;{q}&quot;
-                                </h2>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-white text-2xl md:text-3xl font-semibold">
+                                        Search Results for &quot;{q}&quot;
+                                    </h2>
+                                    {isEnriching && (
+                                        <div className="flex items-center gap-2 text-blue-400 text-sm">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-400"></div>
+                                            <span>Loading more results...</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 pb-8">
                                     {results.map((result) => (
                                         <SearchMovieCard
@@ -136,6 +230,10 @@ const Search = () => {
                                                 year: result.year?.toString() || '',
                                             }}
                                         />
+                                    ))}
+                                    {/* Show skeleton loaders while enriching */}
+                                    {showSkeletons && Array.from({ length: 6 }).map((_, index) => (
+                                        <SearchMovieCardSkeleton key={`skeleton-${index}`} />
                                     ))}
                                 </div>
                             </>

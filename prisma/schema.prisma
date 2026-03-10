@@ -72,10 +72,15 @@ model Movie {
   tmdbId       Int?
   year         Int?
   rating       Float?
-  popularity   Float?   // TMDB popularity score
+  popularity   Float?   @default(0) // TMDB popularity score for ranking
   type         String   @default("movie") // "movie" or "tv"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  
+  @@index([title])
+  @@index([type])
+  @@index([popularity])
+  @@index([tmdbId])
 }
 
 model WatchHistory {

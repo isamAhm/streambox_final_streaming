@@ -60,6 +60,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     initializeForm();
   }, [user, isLoaded, visible]);
 
+  // Handle return from re-authentication
+  useEffect(() => {
+    if (visible && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reauthSuccess = urlParams.get('reauth');
+      const reauthFlag = sessionStorage.getItem('reauth_for_password');
+
+      if (reauthSuccess === 'success' && reauthFlag === 'true') {
+        // Clear the flag and URL parameter
+        sessionStorage.removeItem('reauth_for_password');
+        window.history.replaceState({}, '', window.location.pathname);
+
+        // Update timestamp and show password form
+        setLastSignInTime(Date.now());
+        setShowReauthModal(false);
+        setShowPasswordSection(true);
+        toast.success('Identity confirmed. You can now set your password.');
+      }
+    }
+  }, [visible]);
+
   // Reset form when modal closes
   const handleClose = useCallback(() => {
     if (user && isLoaded) {
@@ -82,21 +103,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   // Check if session is older than 30 minutes
   const needsReauth = useCallback(() => {
     if (!lastSignInTime) return false;
-    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const thirtyMinutes = 1 * 60 * 1000; // 30 minutes in milliseconds
     return (Date.now() - lastSignInTime) > thirtyMinutes;
   }, [lastSignInTime]);
 
   // Handle OAuth re-authentication
+  // Handle OAuth re-authentication - proper OAuth flow
   const handleReauthWithGoogle = useCallback(async () => {
     if (!isSignInLoaded || !signIn) return;
 
     try {
+      // Store a flag to know we're in re-auth mode
+      sessionStorage.setItem('reauth_for_password', 'true');
+
+      // Start OAuth flow for re-authentication
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: window.location.pathname
+        redirectUrlComplete: window.location.pathname + '?reauth=success'
       });
     } catch (error: any) {
+      console.error('Re-auth error:', error);
       toast.error('Re-authentication failed. Please try again.');
     }
   }, [signIn, isSignInLoaded]);
@@ -105,24 +132,33 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     if (!isSignInLoaded || !signIn) return;
 
     try {
+      // Store a flag to know we're in re-auth mode
+      sessionStorage.setItem('reauth_for_password', 'true');
+
+      // Start OAuth flow for re-authentication
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_apple',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: window.location.pathname
+        redirectUrlComplete: window.location.pathname + '?reauth=success'
       });
     } catch (error: any) {
+      console.error('Re-auth error:', error);
       toast.error('Re-authentication failed. Please try again.');
     }
   }, [signIn, isSignInLoaded]);
 
-  // Handle "Set Password" button click
-  const handleSetPasswordClick = useCallback(() => {
-    if (!hasPassword && needsReauth()) {
-      // OAuth user needs re-authentication if session is old
-      setShowReauthModal(true);
-    } else {
-      // Show password form directly
+  // Handle "Set Password" or "Change Password" button click
+  const handlePasswordButtonClick = useCallback(() => {
+    if (hasPassword) {
+      // User has password - no re-auth needed since they'll enter current password
       setShowPasswordSection(true);
+    } else {
+      // OAuth user setting password for first time - check if re-auth needed
+      if (needsReauth()) {
+        setShowReauthModal(true);
+      } else {
+        setShowPasswordSection(true);
+      }
     }
   }, [hasPassword, needsReauth]);
 
@@ -295,7 +331,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
             <h2 className="text-white text-2xl font-bold mb-2">Confirm Your Identity</h2>
             <p className="text-gray-400 text-center mb-6">
-              For security, please confirm your identity before adding a password.
+              {hasPassword
+                ? 'For security, please confirm your identity before changing your password.'
+                : 'For security, please confirm your identity before adding a password.'}
             </p>
 
             <div className="w-full space-y-3">
@@ -419,10 +457,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
                 onClick={() => {
                   if (showPasswordSection) {
                     setShowPasswordSection(false);
-                  } else if (!hasPassword) {
-                    handleSetPasswordClick();
                   } else {
-                    setShowPasswordSection(true);
+                    handlePasswordButtonClick();
                   }
                 }}
                 variant="outline"
