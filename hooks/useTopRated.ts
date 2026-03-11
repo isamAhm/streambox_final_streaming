@@ -6,9 +6,10 @@ const useTopRated = () => {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
+        shouldRetryOnError: false,
     });
     return {
-        data,
+        data: data || [],
         error,
         isLoading
     }

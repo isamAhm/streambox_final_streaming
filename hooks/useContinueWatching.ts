@@ -7,7 +7,8 @@ const useContinueWatching = () => {
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
         revalidateOnMount: true,
-        dedupingInterval: 2000, // Prevent duplicate requests within 2 seconds
+        dedupingInterval: 2000,
+        shouldRetryOnError: false,
     });
 
     return {

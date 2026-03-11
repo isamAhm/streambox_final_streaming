@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Billboard from '@/components/Billboard';
 import MovieList from '@/components/MovieList';
 import ContinueWatchingList from '@/components/ContinueWatchingList';
-import InfoModal from '@/components/InfoModal';
+import dynamic from 'next/dynamic';
 import useMovieList from '@/hooks/useMovieList';
 import useFavorites from '@/hooks/useFavorites';
 import useContinueWatching from '@/hooks/useContinueWatching';
@@ -12,6 +12,11 @@ import useSeries from '@/hooks/useSeries';
 import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import { LoadingAnimation } from '@/components/loading-animation';
+
+// Lazy load InfoModal since it's not always needed
+const InfoModal = dynamic(() => import('@/components/InfoModal'), {
+  ssr: false,
+});
 
 
 const Home = () => {
@@ -29,20 +34,13 @@ const Home = () => {
     mutateContinueWatching();
   }, [mutateContinueWatching]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Continue Watching Data:', continueWatching);
-    console.log('Continue Watching Loading:', isContinueWatchingLoading);
-    console.log('Continue Watching Error:', continueWatchingError);
-  }, [continueWatching, isContinueWatchingLoading, continueWatchingError]);
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       {isLoading ? (
         <LoadingAnimation />
       ) : (
         <>
-          <InfoModal visible={isOpen} onClose={closeModal} />
+          {isOpen && <InfoModal visible={isOpen} onClose={closeModal} />}
           <Navbar />
           <Billboard />
           <div className="pb-40">

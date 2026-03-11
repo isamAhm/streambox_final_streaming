@@ -10,7 +10,7 @@ interface MovieCardProps {
   data: MovieInterface;
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
+const MovieCard: React.FC<MovieCardProps> = React.memo(({ data }) => {
   const router = useRouter();
   const { openModal, isOpen } = useInfoModalStore();
   const [forceHideHover, setForceHideHover] = useState(false);
@@ -122,6 +122,6 @@ const MovieCard: React.FC<MovieCardProps> = ({ data }) => {
       </div>
     </div>
   );
-}
+});
 
 export default MovieCard;

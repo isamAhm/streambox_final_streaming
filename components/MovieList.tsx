@@ -1,7 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { MovieInterface } from '@/types';
 import MovieCard from '@/components/MovieCard';
-import { isEmpty } from 'lodash';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface MovieListProps {
@@ -14,8 +13,10 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
 
-  const handleScroll = (direction: 'left' | 'right') => {
+  const handleScroll = useCallback((direction: 'left' | 'right') => {
     if (!listRef.current) return;
 
     const scrollAmount = listRef.current.clientWidth * 0.7;
@@ -24,21 +25,58 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
       : listRef.current.scrollLeft + scrollAmount;
 
     listRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
-  };
+  }, []);
 
-  const checkScrollPosition = () => {
+  const checkScrollPosition = useCallback(() => {
     if (listRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = listRef.current;
       setShowLeftArrow(scrollLeft > 10);
       setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+
+      // Calculate visible range for virtual scrolling
+      if (data.length > 50) {
+        const cardWidth = 200; // approximate card width
+        const startIndex = Math.max(0, Math.floor(scrollLeft / cardWidth) - 5);
+        const endIndex = Math.min(data.length, Math.ceil((scrollLeft + clientWidth) / cardWidth) + 5);
+        setVisibleRange({ start: startIndex, end: endIndex });
+      }
     }
-  };
+  }, [data.length]);
+
+  // Throttled hover handler
+  const handleMouseEnter = useCallback((index: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredIndex(index);
+    }, 50); // 50ms throttle
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setHoveredIndex(null);
+  }, []);
 
   useEffect(() => {
     checkScrollPosition();
-  }, []);
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [checkScrollPosition]);
 
-  if (isEmpty(data)) return null;
+  // Determine if we should use virtual scrolling
+  const useVirtualScrolling = data.length > 50;
+  const visibleData = useMemo(() => {
+    if (!useVirtualScrolling) return data;
+    return data.slice(visibleRange.start, visibleRange.end);
+  }, [data, useVirtualScrolling, visibleRange]);
+
+  if (!data || data.length === 0) return null;
 
   return (
     <div className="px-4 md:px-12 mt-4 mb-8">
@@ -87,33 +125,47 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
           className="flex gap-2 overflow-x-scroll scrollbar-hide scroll-smooth pb-14 pt-8 px-12"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {data.map((movie, index) => {
+          {/* Spacer for virtual scrolling */}
+          {useVirtualScrolling && visibleRange.start > 0 && (
+            <div style={{ minWidth: `${visibleRange.start * 200}px` }} />
+          )}
+
+          {(useVirtualScrolling ? visibleData : data).map((movie, idx) => {
+            const index = useVirtualScrolling ? visibleRange.start + idx : idx;
             const isHovered = hoveredIndex === index;
             const isBeforeHovered = hoveredIndex !== null && index < hoveredIndex;
             const isAfterHovered = hoveredIndex !== null && index > hoveredIndex;
             const isFirst = index === 0;
             const isLast = index === data.length - 1;
 
+            // Calculate transform value
+            const transformValue = isBeforeHovered
+              ? '-25%'
+              : isAfterHovered
+                ? '25%'
+                : '0';
+
             return (
               <div
                 key={movie.id}
-                className="flex-none w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] transition-transform duration-300 ease-in-out"
+                className="movie-card-wrapper flex-none w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px]"
                 style={{
-                  transform: isBeforeHovered
-                    ? 'translateX(-25%)'
-                    : isAfterHovered
-                      ? 'translateX(25%)'
-                      : 'translateX(0)',
-                  zIndex: isHovered ? 60 : 10,
-                  transformOrigin: isFirst ? 'left' : isLast ? 'right' : 'center',
-                }}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
+                  '--transform-x': transformValue,
+                  '--z-index': isHovered ? 60 : 10,
+                  '--transform-origin': isFirst ? 'left' : isLast ? 'right' : 'center',
+                } as React.CSSProperties}
+                onMouseEnter={() => handleMouseEnter(index)}
+                onMouseLeave={handleMouseLeave}
               >
                 <MovieCard data={movie} />
               </div>
             );
           })}
+
+          {/* Spacer for virtual scrolling */}
+          {useVirtualScrolling && visibleRange.end < data.length && (
+            <div style={{ minWidth: `${(data.length - visibleRange.end) * 200}px` }} />
+          )}
         </div>
 
         {/* Right Arrow */}
@@ -153,6 +205,14 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        
+        .movie-card-wrapper {
+          transition: transform 300ms ease-in-out;
+          transform: translateX(var(--transform-x));
+          z-index: var(--z-index);
+          transform-origin: var(--transform-origin);
+          will-change: transform;
         }
       `}</style>
     </div>

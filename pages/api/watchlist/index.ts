@@ -91,17 +91,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('Watchlist API error:', error);
-
-        // More detailed error logging
-        if (error instanceof Error) {
+        // Only log unexpected errors, not auth errors
+        if (error instanceof Error && error.message !== 'Not signed in') {
+            console.error('Watchlist API error:', error);
             console.error('Error message:', error.message);
             console.error('Error stack:', error.stack);
         }
 
-        return res.status(500).json({
-            error: 'Internal server error',
-            details: error instanceof Error ? error.message : 'Unknown error'
+        return res.status(error instanceof Error && error.message === 'Not signed in' ? 401 : 500).json({
+            error: error instanceof Error ? error.message : 'Internal server error'
         });
     }
 }

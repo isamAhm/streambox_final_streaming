@@ -5,9 +5,14 @@ import { getAuth } from '@clerk/nextjs/server';
 import Navbar from '@/components/Navbar';
 import SearchMovieCard from '@/components/SearchMovieCard';
 import SearchMovieCardSkeleton from '@/components/SearchMovieCardSkeleton';
-import InfoModal from '@/components/InfoModal';
+import dynamic from 'next/dynamic';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import axios from 'axios';
+
+// Lazy load InfoModal
+const InfoModal = dynamic(() => import('@/components/InfoModal'), {
+    ssr: false,
+});
 
 export async function getServerSideProps(context: NextPageContext) {
     const { userId } = getAuth(context.req as any);
@@ -168,7 +173,7 @@ const Search = () => {
 
     return (
         <div className="min-h-screen bg-black">
-            <InfoModal visible={isOpen} onClose={closeModal} />
+            {isOpen && <InfoModal visible={isOpen} onClose={closeModal} />}
             <Navbar />
 
             <div className="pt-24 px-4 md:px-12">

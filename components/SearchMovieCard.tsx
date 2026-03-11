@@ -7,7 +7,7 @@ interface SearchMovieCardProps {
     data: MovieInterface;
 }
 
-const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
+const SearchMovieCard: React.FC<SearchMovieCardProps> = React.memo(({ data }) => {
     const { openModal } = useInfoModalStore();
 
     const handleClick = useCallback(() => {
@@ -71,6 +71,6 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = ({ data }) => {
             </div>
         </div>
     );
-}
+});
 
 export default SearchMovieCard;

@@ -7,10 +7,15 @@ const useSeries = () => {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
-        onError: (err) => handleApiError(err, 'Failed to load series'),
+        shouldRetryOnError: false,
+        onError: (err) => {
+            if (err?.response?.status !== 401) {
+                handleApiError(err, 'Failed to load series');
+            }
+        },
     });
     return {
-        data,
+        data: data || [],
         error,
         isLoading,
         mutate

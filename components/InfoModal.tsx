@@ -11,27 +11,28 @@ interface InfoModalProps {
   onClose: any;
 }
 
-const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
+const InfoModal: React.FC<InfoModalProps> = React.memo(({ visible, onClose }) => {
   const [isVisible, setIsVisible] = useState<boolean>(!!visible);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [trailerFetched, setTrailerFetched] = useState<string | null>(null);
   const { movieId } = useInfoModalStore();
   const { data = {}, isLoading } = useMovie(movieId);
 
   useEffect(() => {
     setIsVisible(!!visible);
 
-    // Fetch trailer when modal opens
-    if (visible && movieId) {
+    // Fetch trailer when modal opens (only once per movie)
+    if (visible && movieId && trailerFetched !== movieId) {
       setShowTrailer(false);
       setTrailerUrl(null);
-      setIsMuted(true); // Reset to muted when modal opens
+      setIsMuted(true);
+      setTrailerFetched(movieId);
 
       axios.get(`/api/movies/trailer/${movieId}`)
         .then(response => {
           setTrailerUrl(response.data.trailerUrl);
-          // Small delay to ensure smooth transition
           setTimeout(() => setShowTrailer(true), 500);
         })
         .catch(error => {
@@ -39,7 +40,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
           setTrailerUrl(null);
         });
     }
-  }, [visible, movieId]);
+  }, [visible, movieId, trailerFetched]);
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
@@ -194,6 +195,6 @@ const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
       </div>
     </div>
   );
-}
+});
 
 export default InfoModal;

@@ -5,21 +5,23 @@ import useBillboard from '@/hooks/useBillboard';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import axios from 'axios';
 
-const Billboard: React.FC = () => {
+const Billboard: React.FC = React.memo(() => {
   const { openModal } = useInfoModalStore();
   const { data } = useBillboard();
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [trailerFetched, setTrailerFetched] = useState(false);
 
   const handleOpenModal = useCallback(() => {
     openModal(data?.id);
   }, [openModal, data?.id]);
 
-  // Fetch trailer when billboard data loads
+  // Fetch trailer when billboard data loads (only once per movie)
   useEffect(() => {
-    if (data?.id) {
+    if (data?.id && !trailerFetched) {
       setShowTrailer(false);
       setTrailerUrl(null);
+      setTrailerFetched(true);
 
       axios.get(`/api/movies/trailer/${data.id}`)
         .then(response => {
@@ -32,7 +34,7 @@ const Billboard: React.FC = () => {
           setTrailerUrl(null);
         });
     }
-  }, [data?.id]);
+  }, [data?.id, trailerFetched]);
 
   return (
     <div className="relative h-[56.25vw]">
@@ -95,6 +97,6 @@ const Billboard: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Billboard;
