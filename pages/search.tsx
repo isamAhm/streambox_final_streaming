@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { NextPageContext } from 'next';
 import { getAuth } from '@clerk/nextjs/server';
@@ -75,25 +75,7 @@ const Search = () => {
         };
     }, []);
 
-    // Poll for new results while enriching
-    useEffect(() => {
-        if (!isEnriching || !q || typeof q !== 'string') return;
-
-        // Poll every 2 seconds, max 5 times (10 seconds total)
-        if (pollCount >= 5) {
-            setIsEnriching(false);
-            setShowSkeletons(false);
-            return;
-        }
-
-        const pollTimer = setTimeout(() => {
-            pollForNewResults(q);
-        }, 2000);
-
-        return () => clearTimeout(pollTimer);
-    }, [isEnriching, pollCount, q]);
-
-    const pollForNewResults = async (query: string) => {
+    const pollForNewResults = useCallback(async (query: string) => {
         try {
             const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(query)}&type=all`, {
                 signal: abortControllerRef.current?.signal
@@ -121,7 +103,25 @@ const Search = () => {
             console.error('Poll error:', error);
             setPollCount(prev => prev + 1);
         }
-    };
+    }, [results.length]);
+
+    // Poll for new results while enriching
+    useEffect(() => {
+        if (!isEnriching || !q || typeof q !== 'string') return;
+
+        // Poll every 2 seconds, max 5 times (10 seconds total)
+        if (pollCount >= 5) {
+            setIsEnriching(false);
+            setShowSkeletons(false);
+            return;
+        }
+
+        const pollTimer = setTimeout(() => {
+            pollForNewResults(q);
+        }, 2000);
+
+        return () => clearTimeout(pollTimer);
+    }, [isEnriching, pollCount, q, pollForNewResults]);
 
     const performSearch = async (query: string) => {
         if (!query.trim()) return;

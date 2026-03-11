@@ -197,4 +197,6 @@ const InfoModal: React.FC<InfoModalProps> = React.memo(({ visible, onClose }) =>
   );
 });
 
+InfoModal.displayName = 'InfoModal';
+
 export default InfoModal;

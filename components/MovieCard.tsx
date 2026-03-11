@@ -124,4 +124,6 @@ const MovieCard: React.FC<MovieCardProps> = React.memo(({ data }) => {
   );
 });
 
+MovieCard.displayName = 'MovieCard';
+
 export default MovieCard;

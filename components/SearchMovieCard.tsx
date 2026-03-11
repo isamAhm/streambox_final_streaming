@@ -73,4 +73,6 @@ const SearchMovieCard: React.FC<SearchMovieCardProps> = React.memo(({ data }) =>
     );
 });
 
+SearchMovieCard.displayName = 'SearchMovieCard';
+
 export default SearchMovieCard;

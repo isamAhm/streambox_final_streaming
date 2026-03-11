@@ -5,7 +5,7 @@ import useBillboard from '@/hooks/useBillboard';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import axios from 'axios';
 
-const Billboard: React.FC = React.memo(() => {
+const Billboard = React.memo(() => {
   const { openModal } = useInfoModalStore();
   const { data } = useBillboard();
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -98,5 +98,7 @@ const Billboard: React.FC = React.memo(() => {
     </div>
   );
 });
+
+Billboard.displayName = 'Billboard';
 
 export default Billboard;
