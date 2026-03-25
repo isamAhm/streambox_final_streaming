@@ -123,3 +123,27 @@ model Watchlist {
   @@unique([userId, movieId])
   @@index([userId, status])
 }
+
+model CinemaRoom {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId        String   @unique
+  hostUserId    String
+  contentId     String?  @db.ObjectId
+  playbackState Json
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model CinemaRoomParticipant {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  isHost   Boolean  @default(false)
+
+  @@unique([roomId, userId])
+  @@index([roomId, joinedAt])
+}

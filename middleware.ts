@@ -10,7 +10,7 @@ export default authMiddleware({
         return;
       }
       // If not authenticated, redirect to home landing page
-      const homeUrl = new URL('/home', req.url);
+      const homeUrl = new URL('/home', req.nextUrl.origin);
       return Response.redirect(homeUrl);
     }
   },

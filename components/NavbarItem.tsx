@@ -14,7 +14,7 @@ const NavbarItem: React.FC<NavbarItemProps> = ({ label, active, href, onClick })
       href={href}
       onClick={onClick}
       className={`
-        ${active ? 'text-white cursor-default' : 'text-gray-300 hover:text-white cursor-pointer transition'}
+        ${active ? 'text-blue-400 cursor-default' : 'text-gray-300 hover:text-white cursor-pointer transition'}
         text-sm font-medium
       `}
     >

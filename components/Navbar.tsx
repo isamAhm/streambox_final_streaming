@@ -185,6 +185,7 @@ const Navbar = () => {
           <NavbarItem label="Movies" href="/movies" active={router.pathname === '/movies'} />
           {/* <NavbarItem label="New & Popular" href="/newPopular" active={router.pathname === '/newPopular'} /> */}
           <NavbarItem label="My List" href="/myList" active={router.pathname === '/myList'} />
+          <NavbarItem label="Cinema Room" href="/cinema-room" active={router.pathname.startsWith('/cinema-room')} />
           {/* <NavbarItem
             label="Browse by Languages"
             href="/languages"

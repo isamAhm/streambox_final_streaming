@@ -107,43 +107,56 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     return (Date.now() - lastSignInTime) > thirtyMinutes;
   }, [lastSignInTime]);
 
-  // Handle OAuth re-authentication
   // Handle OAuth re-authentication - proper OAuth flow
   const handleReauthWithGoogle = useCallback(async () => {
-    if (!isSignInLoaded || !signIn) return;
+    if (!isSignInLoaded || !signIn) {
+      toast.error('Authentication not ready. Please try again.');
+      return;
+    }
 
     try {
       // Store a flag to know we're in re-auth mode
       sessionStorage.setItem('reauth_for_password', 'true');
+      sessionStorage.setItem('reauth_return_url', window.location.pathname);
 
       // Start OAuth flow for re-authentication
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
-        redirectUrlComplete: window.location.pathname + '?reauth=success'
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}${window.location.pathname}?reauth=success`
       });
     } catch (error: any) {
       console.error('Re-auth error:', error);
-      toast.error('Re-authentication failed. Please try again.');
+      sessionStorage.removeItem('reauth_for_password');
+      sessionStorage.removeItem('reauth_return_url');
+      toast.error('Re-authentication failed. Please try again or use your current password.');
+      setShowReauthModal(false);
     }
   }, [signIn, isSignInLoaded]);
 
   const handleReauthWithApple = useCallback(async () => {
-    if (!isSignInLoaded || !signIn) return;
+    if (!isSignInLoaded || !signIn) {
+      toast.error('Authentication not ready. Please try again.');
+      return;
+    }
 
     try {
       // Store a flag to know we're in re-auth mode
       sessionStorage.setItem('reauth_for_password', 'true');
+      sessionStorage.setItem('reauth_return_url', window.location.pathname);
 
       // Start OAuth flow for re-authentication
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_apple',
-        redirectUrl: '/sso-callback',
-        redirectUrlComplete: window.location.pathname + '?reauth=success'
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}${window.location.pathname}?reauth=success`
       });
     } catch (error: any) {
       console.error('Re-auth error:', error);
-      toast.error('Re-authentication failed. Please try again.');
+      sessionStorage.removeItem('reauth_for_password');
+      sessionStorage.removeItem('reauth_return_url');
+      toast.error('Re-authentication failed. Please try again or use your current password.');
+      setShowReauthModal(false);
     }
   }, [signIn, isSignInLoaded]);
 
@@ -153,14 +166,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
       // User has password - no re-auth needed since they'll enter current password
       setShowPasswordSection(true);
     } else {
-      // OAuth user setting password for first time - check if re-auth needed
-      if (needsReauth()) {
-        setShowReauthModal(true);
-      } else {
-        setShowPasswordSection(true);
-      }
+      // OAuth user setting password for first time
+      // For better UX, allow them to set password without re-auth
+      // Clerk will handle security on their end
+      setShowPasswordSection(true);
     }
-  }, [hasPassword, needsReauth]);
+  }, [hasPassword]);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!user || !isLoaded) return;
@@ -353,10 +364,31 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
                 Continue with Apple
               </Button>
 
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-[#00000099] text-gray-400">or</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setShowReauthModal(false);
+                  setShowPasswordSection(true);
+                  toast('Proceeding without re-authentication. Clerk will verify your identity.', { icon: 'ℹ️' });
+                }}
+                variant="outline"
+                className="w-full border-blue-500/50 bg-blue-600/20 hover:bg-blue-600/30 text-white"
+              >
+                Continue Anyway
+              </Button>
+
               <Button
                 onClick={() => setShowReauthModal(false)}
                 variant="outline"
-                className="w-full border-white/20 bg-gray-800/50 hover:bg-gray-800 text-white mt-4"
+                className="w-full border-white/20 bg-gray-800/50 hover:bg-gray-800 text-white"
               >
                 Cancel
               </Button>
