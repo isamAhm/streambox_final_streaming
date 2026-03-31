@@ -1,14 +1,14 @@
 /**
- * Anime stream API — aniwatchtv.to
- * Returns all available embed URLs (VidSrc, MegaCloud, T-Cloud).
+ * Anime stream API — extracts direct m3u8 sources from aniwatchtv.to
+ * via MegaCloud server-side extraction. Falls back to embed URL if extraction fails.
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getEpisodeServers, getEmbedLink } from '@/lib/aniwatchClient';
+import { getEpisodeServers, getEmbedLink, extractMegaCloud } from '@/lib/aniwatchClient';
 import { cache } from '@/lib/cache';
 
-const STREAM_CACHE_TTL = 5 * 60 * 1000; // 5 min — embed IDs rotate frequently
-const TIMEOUT_MS = 12000;
+const STREAM_CACHE_TTL = 10 * 60 * 1000; // 10 min
+const TIMEOUT_MS = 15000;
 const SERVER_PRIORITY = ['vidsrc', 'megacloud', 't-cloud'];
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -27,48 +27,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const category: 'sub' | 'dub' = dub === 'true' ? 'dub' : 'sub';
-    const cacheKey = `aw:embed:${episodeId}:${category}`;
+    const cacheKey = `aw:m3u8:${episodeId}:${category}`;
     const cached = cache.get<object>(cacheKey);
     if (cached) return res.status(200).json(cached);
 
     try {
         const servers = await withTimeout(getEpisodeServers(episodeId), TIMEOUT_MS);
         const available = (servers[category]?.length ? servers[category] : servers.sub) || [];
-
         if (!available.length) throw new Error('No servers available');
 
-        // Fetch embed links for all servers in parallel
         const sorted = SERVER_PRIORITY
             .map(name => available.find(s => s.serverName.toLowerCase().includes(name)))
             .filter(Boolean) as typeof available;
+        for (const s of available) { if (!sorted.includes(s)) sorted.push(s); }
 
-        // Also include any servers not in our priority list
-        for (const s of available) {
-            if (!sorted.includes(s)) sorted.push(s);
+        let lastError: Error | null = null;
+
+        for (const entry of sorted) {
+            try {
+                const embedUrl = await withTimeout(getEmbedLink(entry.serverId), TIMEOUT_MS);
+                const extracted = await withTimeout(extractMegaCloud(embedUrl), TIMEOUT_MS);
+
+                if (!extracted.sources.length) throw new Error('No sources extracted');
+
+                const result = {
+                    type: 'hls' as const,
+                    sources: extracted.sources,
+                    subtitles: extracted.subtitles,
+                    server: entry.serverName,
+                };
+
+                cache.set(cacheKey, result, STREAM_CACHE_TTL);
+                res.setHeader('Cache-Control', 'no-store');
+                return res.status(200).json(result);
+            } catch (err: any) {
+                console.warn(`[stream] ${entry.serverName} failed: ${err.message}`);
+                lastError = err;
+            }
         }
 
-        const results = await Promise.allSettled(
-            sorted.map(async entry => {
-                const embedUrl = await withTimeout(getEmbedLink(entry.serverId), TIMEOUT_MS);
-                return { server: entry.serverName, embedUrl };
-            })
-        );
-
-        const servers_out = results
-            .filter((r): r is PromiseFulfilledResult<{ server: string; embedUrl: string }> => r.status === 'fulfilled')
-            .map(r => {
-                const { server, embedUrl } = r.value;
-                // Use relative URL — works on any domain without needing APP_URL
-                const proxied = `/api/anime/embed-proxy?url=${encodeURIComponent(embedUrl)}`;
-                return { server, embedUrl: proxied };
-            });
-
-        if (!servers_out.length) throw new Error('All servers failed to return embed links');
-
-        const result = { type: 'embed' as const, servers: servers_out };
-        cache.set(cacheKey, result, STREAM_CACHE_TTL);
-        res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json(result);
+        throw lastError || new Error('All servers failed');
     } catch (err: any) {
         const isTimeout = err?.message === 'timeout';
         console.error('[stream] Fatal:', err?.message);
