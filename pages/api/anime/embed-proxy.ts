@@ -65,11 +65,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('X-Frame-Options', 'ALLOWALL');
+        res.setHeader('Content-Security-Policy', 'frame-ancestors *');
 
         if (contentType.includes('text/html')) {
             const html = Buffer.from(response.data).toString('utf-8');
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.removeHeader('Content-Security-Policy');
             return res.status(200).send(rewrite(html, baseOrigin, true));
         }
 
