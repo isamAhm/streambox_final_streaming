@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "pages/api/anime/info/[animeId].ts": { "maxDuration": 30 },
+    "pages/api/anime/stream.ts": { "maxDuration": 30 },
+    "pages/api/anime/proxy.ts": { "maxDuration": 30 }
+  }
+}
