@@ -20,6 +20,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ visible }) => {
         <NavbarItem label="Movies" href="/movies" active={router.pathname === '/movies'} />
         {/* <NavbarItem label="New & Popular" href="/newPopular" active={router.pathname === '/newPopular'} /> */}
         <NavbarItem label="My List" href="/myList" active={router.pathname === '/myList'} />
+        <NavbarItem label="Anime" href="/anime" active={router.pathname.startsWith('/anime')} />
         <NavbarItem label="Cinema Room" href="/cinema-room" active={router.pathname.startsWith('/cinema-room')} />
         {/* <NavbarItem
           label="Browse by Languages"

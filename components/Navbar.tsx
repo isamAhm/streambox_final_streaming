@@ -89,48 +89,45 @@ const Navbar = () => {
     }
   }, [mutateNotifications]);
 
+  // Detect anime section
+  const isAnimePage = router.pathname.startsWith('/anime');
+
   // Handle search input change with debounce
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
 
-    // Clear previous timer
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    // If query is empty, clear suggestions
     if (!value.trim()) {
       setSearchSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
-    // Debounce search API call
     debounceTimer.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        console.log('Searching for:', value);
-        const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(value)}&quick=true`);
-        console.log('Search response:', response.data);
-        console.log('Response is array:', Array.isArray(response.data));
-
-        // Handle both array and object responses
-        const results = Array.isArray(response.data) ? response.data : response.data.results || [];
-        console.log('Processed results:', results.length, 'items');
-
-        setSearchSuggestions(results.slice(0, 5)); // Show top 5 results
+        if (isAnimePage) {
+          // Anime search
+          const response = await axios.get(`/api/anime/search?q=${encodeURIComponent(value)}`);
+          const results = response.data.results || [];
+          setSearchSuggestions(results.slice(0, 5));
+        } else {
+          // Movie/show search
+          const response = await axios.get(`/api/movies/search?query=${encodeURIComponent(value)}&quick=true`);
+          const results = Array.isArray(response.data) ? response.data : response.data.results || [];
+          setSearchSuggestions(results.slice(0, 5));
+        }
         setShowSuggestions(true);
-      } catch (error: any) {
-        console.error('Search error:', error);
-        console.error('Error response:', error.response?.data);
+      } catch {
         setSearchSuggestions([]);
         setShowSuggestions(false);
       } finally {
         setIsSearching(false);
       }
-    }, 300); // 300ms debounce
-  }, []);
+    }, 300);
+  }, [isAnimePage]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -154,17 +151,25 @@ const Navbar = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    if (!searchQuery.trim()) return;
+    if (isAnimePage) {
+      // Navigate to anime page with search query — the page handles it
+      router.push(`/anime?q=${encodeURIComponent(searchQuery)}`);
+    } else {
       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setShowSearch(false);
-      setSearchQuery('');
-      setSearchSuggestions([]);
-      setShowSuggestions(false);
     }
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchSuggestions([]);
+    setShowSuggestions(false);
   };
 
-  const handleSuggestionClick = (movieId: string) => {
-    openModal(movieId);
+  const handleSuggestionClick = (id: string) => {
+    if (isAnimePage) {
+      router.push(`/anime/${id}`);
+    } else {
+      openModal(id);
+    }
     setShowSearch(false);
     setSearchQuery('');
     setSearchSuggestions([]);
@@ -185,6 +190,7 @@ const Navbar = () => {
           <NavbarItem label="Movies" href="/movies" active={router.pathname === '/movies'} />
           {/* <NavbarItem label="New & Popular" href="/newPopular" active={router.pathname === '/newPopular'} /> */}
           <NavbarItem label="My List" href="/myList" active={router.pathname === '/myList'} />
+          <NavbarItem label="Anime" href="/anime" active={router.pathname.startsWith('/anime')} />
           <NavbarItem label="Cinema Room" href="/cinema-room" active={router.pathname.startsWith('/cinema-room')} />
           {/* <NavbarItem
             label="Browse by Languages"
@@ -208,7 +214,7 @@ const Navbar = () => {
                   type="text"
                   value={searchQuery}
                   onChange={handleSearchChange}
-                  placeholder="Search movies & shows..."
+                  placeholder={isAnimePage ? 'Search anime...' : 'Search movies & shows...'}
                   className="px-4 py-2 bg-black bg-opacity-70 text-white border border-gray-600 rounded-md focus:outline-none focus:border-white transition w-48 md:w-64"
                   autoFocus
                 />
@@ -223,32 +229,44 @@ const Navbar = () => {
 
               {/* Search Suggestions Dropdown */}
               {showSuggestions && searchSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-12 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md shadow-xl max-h-96 overflow-y-auto z-50">
-                  {searchSuggestions.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => handleSuggestionClick(item.id)}
-                      className="flex items-center gap-3 p-3 hover:bg-zinc-800 cursor-pointer transition"
-                    >
-                      <img
-                        src={item.thumbnailUrl}
-                        alt={item.title}
-                        className="w-12 h-16 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold text-sm">{item.title}</h4>
-                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                          {item.year && <span>{item.year}</span>}
-                          {item.type && <span>• {item.type === 'tv' ? 'TV Show' : 'Movie'}</span>}
-                          {item.rating && (
-                            <span className="flex items-center gap-1">
-                              • <span className="text-yellow-400">★</span> {item.rating.toFixed(1)}
-                            </span>
-                          )}
+                <div className="absolute top-full left-0 right-12 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md shadow-xl max-h-96 overflow-y-auto z-50"
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: '#3f3f46 transparent' }}
+                >
+                  {searchSuggestions.map((item) => {
+                    const isAnime = isAnimePage;
+                    const id = String(item.id);
+                    const thumb = isAnime ? item.image : item.thumbnailUrl;
+                    const label = isAnime ? (item.title?.english || item.title?.romaji) : item.title;
+                    const meta1 = isAnime ? item.releaseDate : item.year;
+                    const meta2 = isAnime
+                      ? (item.type ? item.type : null)
+                      : (item.type === 'tv' ? 'TV Show' : item.type ? 'Movie' : null);
+                    const rating = item.rating
+                      ? (isAnime ? (item.rating / 10).toFixed(1) : item.rating.toFixed(1))
+                      : null;
+
+                    return (
+                      <div
+                        key={id}
+                        onClick={() => handleSuggestionClick(id)}
+                        className="flex items-center gap-3 p-3 hover:bg-zinc-800 cursor-pointer transition"
+                      >
+                        <img src={thumb} alt={label} className="w-12 h-16 object-cover rounded" />
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold text-sm">{label}</h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                            {meta1 && <span>{meta1}</span>}
+                            {meta2 && <span>• {meta2}</span>}
+                            {rating && (
+                              <span className="flex items-center gap-1">
+                                • <span className="text-yellow-400">★</span> {rating}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <div className="p-3 border-t border-gray-700 text-center">
                     <button
                       onClick={handleSearch}

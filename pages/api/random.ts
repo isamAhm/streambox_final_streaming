@@ -10,18 +10,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await serverAuth(req);
 
-    const moviesCount = await prismadb.movie.count();
-    const randomIndex = Math.floor(Math.random() * moviesCount);
-
-    const randomMovies = await prismadb.movie.findMany({
-      take: 1,
-      skip: randomIndex
+    // Pick from top 10 most popular AND well-rated titles for the billboard
+    const trending = await prismadb.movie.findMany({
+      where: {
+        popularity: { gt: 50 },
+        rating: { gte: 7.5 },
+        thumbnailUrl: { not: '' },
+      },
+      orderBy: { popularity: 'desc' },
+      take: 10,
     });
 
-    return res.status(200).json(randomMovies[0]);
+    // Fallback: just top popularity if rating filter yields nothing
+    const pool = trending.length > 0
+      ? trending
+      : await prismadb.movie.findMany({
+        where: { popularity: { gt: 0 }, thumbnailUrl: { not: '' } },
+        orderBy: { popularity: 'desc' },
+        take: 10,
+      });
+
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+
+    return res.status(200).json(pick);
   } catch (error) {
     console.log(error);
-
     return res.status(500).end();
   }
 }
