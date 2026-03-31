@@ -52,7 +52,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 const result = {
                     type: 'hls' as const,
-                    sources: extracted.sources,
+                    sources: extracted.sources.map(s => ({
+                        ...s,
+                        // Proxy m3u8 through our server so the CDN gets the correct Referer
+                        url: `/api/anime/proxy?url=${encodeURIComponent(s.url)}`,
+                    })),
                     subtitles: extracted.subtitles,
                     server: entry.serverName,
                 };
