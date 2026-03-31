@@ -58,6 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             .filter((r): r is PromiseFulfilledResult<{ server: string; embedUrl: string }> => r.status === 'fulfilled')
             .map(r => {
                 const { server, embedUrl } = r.value;
+                // Use relative URL — works on any domain without needing APP_URL
                 const proxied = `/api/anime/embed-proxy?url=${encodeURIComponent(embedUrl)}`;
                 return { server, embedUrl: proxied };
             });

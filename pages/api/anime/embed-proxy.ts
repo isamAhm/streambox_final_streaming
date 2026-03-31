@@ -9,16 +9,10 @@ import axios from 'axios';
 
 const ALLOWED_HOSTS = ['megacloud.blog', 'megacloud.tv', 'rapid-cloud.co'];
 const ANIWATCH_REFERER = 'https://aniwatchtv.to/';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-const PROXY_BASE = `${APP_URL}/api/anime/embed-proxy?url=`;
-
-function proxify(url: string): string {
-    return `${PROXY_BASE}${encodeURIComponent(url)}`;
-}
 
 /** Rewrite all megacloud URLs in text (HTML or JS) to go through our proxy */
 function rewrite(text: string, baseOrigin: string, isHtml: boolean): string {
+    const proxify = (url: string) => `/api/anime/embed-proxy?url=${encodeURIComponent(url)}`;
     let out = text;
 
     // Absolute URLs on allowed hosts inside quotes
