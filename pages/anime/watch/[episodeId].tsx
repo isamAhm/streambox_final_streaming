@@ -141,7 +141,7 @@ export default function AnimeWatchPage() {
                         style={{ minHeight: 'calc(100vh - 53px)' }}
                         allowFullScreen
                         allow="autoplay; fullscreen; picture-in-picture"
-                        referrerPolicy="origin"
+                        referrerPolicy="no-referrer"
                         title={`${title} Episode ${ep}`}
                     />
                 )}

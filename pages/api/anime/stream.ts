@@ -7,7 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getEpisodeServers, getEmbedLink } from '@/lib/aniwatchClient';
 import { cache } from '@/lib/cache';
 
-const STREAM_CACHE_TTL = 20 * 60 * 1000;
+const STREAM_CACHE_TTL = 5 * 60 * 1000; // 5 min — embed IDs rotate frequently
 const TIMEOUT_MS = 12000;
 const SERVER_PRIORITY = ['vidsrc', 'megacloud', 't-cloud'];
 
@@ -56,12 +56,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const servers_out = results
             .filter((r): r is PromiseFulfilledResult<{ server: string; embedUrl: string }> => r.status === 'fulfilled')
-            .map(r => r.value);
+            .map(r => {
+                const { server, embedUrl } = r.value;
+                const proxied = `/api/anime/embed-proxy?url=${encodeURIComponent(embedUrl)}`;
+                return { server, embedUrl: proxied };
+            });
 
         if (!servers_out.length) throw new Error('All servers failed to return embed links');
 
         const result = { type: 'embed' as const, servers: servers_out };
         cache.set(cacheKey, result, STREAM_CACHE_TTL);
+        res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json(result);
     } catch (err: any) {
         const isTimeout = err?.message === 'timeout';
