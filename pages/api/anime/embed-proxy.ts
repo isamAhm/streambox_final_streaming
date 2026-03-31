@@ -10,7 +10,35 @@ import axios from 'axios';
 const ALLOWED_HOSTS = ['megacloud.blog', 'megacloud.tv', 'rapid-cloud.co'];
 const ANIWATCH_REFERER = 'https://aniwatchtv.to/';
 
-/** Rewrite all megacloud URLs in text (HTML or JS) to go through our proxy */
+const XHR_INTERCEPT = `
+<script>
+(function() {
+  var PROXY = '/api/anime/embed-proxy?url=';
+  var HOSTS = ['megacloud.blog', 'megacloud.tv', 'rapid-cloud.co'];
+  function shouldProxy(url) {
+    try { return HOSTS.some(h => new URL(url).hostname === h); } catch(e) { return false; }
+  }
+  // Intercept fetch
+  var origFetch = window.fetch;
+  window.fetch = function(input, init) {
+    var url = typeof input === 'string' ? input : input.url;
+    if (shouldProxy(url)) {
+      var proxied = PROXY + encodeURIComponent(url);
+      input = typeof input === 'string' ? proxied : new Request(proxied, input);
+    }
+    return origFetch.call(this, input, init);
+  };
+  // Intercept XHR
+  var origOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    if (typeof url === 'string' && shouldProxy(url)) {
+      url = PROXY + encodeURIComponent(url);
+    }
+    return origOpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+  };
+})();
+</script>
+`;
 function rewrite(text: string, baseOrigin: string, isHtml: boolean): string {
     const proxify = (url: string) => `/api/anime/embed-proxy?url=${encodeURIComponent(url)}`;
     let out = text;
@@ -69,7 +97,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.setHeader('Content-Security-Policy', 'frame-ancestors *');
 
         if (contentType.includes('text/html')) {
-            const html = Buffer.from(response.data).toString('utf-8');
+            let html = Buffer.from(response.data).toString('utf-8');
+            // Inject XHR/fetch interceptor before any other scripts run
+            html = html.replace('<head>', '<head>' + XHR_INTERCEPT);
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             return res.status(200).send(rewrite(html, baseOrigin, true));
         }
