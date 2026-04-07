@@ -20,20 +20,12 @@ const nextConfig = {
   // Security headers
   async headers() {
     return [
-      // Allow embed-proxy to be loaded in iframes (needed for MegaCloud player)
-      {
-        source: '/api/anime/embed-proxy',
-        headers: [
-          { key: 'X-Frame-Options', value: 'ALLOWALL' },
-          { key: 'Content-Security-Policy', value: "frame-ancestors *" },
-        ],
-      },
       {
         source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',

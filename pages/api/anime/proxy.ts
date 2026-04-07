@@ -4,10 +4,11 @@ const PROXY_BASE = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const FETCH_TIMEOUT_MS = 15000;
 
 function getReferer(hostname: string): string {
+    // animepahe image CDN needs animepahe.si as referer
     if (hostname.includes('animepahe')) return 'https://animepahe.si/';
-    if (hostname.includes('owocdn') || hostname.includes('uwucdn')) return 'https://kwik.cx/';
-    // All MegaCloud CDN hosts (rotating hostnames) use megacloud.blog as referer
-    return 'https://megacloud.blog/';
+    // All AnimePahe video CDNs (uwucdn, owocdn, and any future ones) need kwik.cx
+    // Default to kwik.cx for any unknown CDN — it's the universal AnimePahe referer
+    return 'https://kwik.cx/';
 }
 
 async function fetchWithTimeout(url: string, options: RequestInit, ms: number): Promise<Response> {

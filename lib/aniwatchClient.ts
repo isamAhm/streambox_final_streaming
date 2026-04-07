@@ -12,7 +12,7 @@ import axios from 'axios';
 
 const BASE = 'https://aniwatchtv.to';
 const MEGACLOUD_BASE = 'https://megacloud.blog';
-const KEYS_URL = 'https://raw.githubusercontent.com/yogesh-hacker/yogesh-hacker/refs/heads/main/yogesh-hacker/Megacloud/keys.json';
+const KEYS_URL = 'https://raw.githubusercontent.com/yogesh-hacker/MegacloudKeys/refs/heads/main/keys.json';
 
 const HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -115,30 +115,18 @@ async function getMegaCloudClientKey(sourceId: string): Promise<string> {
         { headers: { 'Referer': `${BASE}/`, 'User-Agent': HEADERS['User-Agent'] } }
     );
 
-    // Pattern 1: window._lk_db = {x: "...", y: "...", z: "..."}  → concatenate x+y+z
-    const lkDb = html.match(/window\._lk_db\s*=\s*\{[xyz]:\s*["']([a-zA-Z0-9]+)["'],\s*[xyz]:\s*["']([a-zA-Z0-9]+)["'],\s*[xyz]:\s*["']([a-zA-Z0-9]+)["']\}/);
-    if (lkDb) return lkDb[1] + lkDb[2] + lkDb[3];
+    const patterns = [
+        /<meta name="_gg_fb" content="([a-zA-Z0-9]+)">/,
+        /<!--\s+_is_th:([0-9a-zA-Z]+)\s+-->/,
+        /<div\s+data-dpi="([0-9a-zA-Z]+)"/,
+        /<script nonce="([0-9a-zA-Z]+)">/,
+        /window\._xy_ws\s*=\s*['"`]([0-9a-zA-Z]+)['"`]/,
+    ];
 
-    // Pattern 2: <!-- _is_th:KEY -->
-    const isth = html.match(/<!--\s+_is_th:([0-9a-zA-Z]+)\s+-->/);
-    if (isth?.[1]) return isth[1];
-
-    // Pattern 3: window._xy_ws = 'KEY'
-    const xyw = html.match(/window\._xy_ws\s*=\s*['"`]([0-9a-zA-Z]+)['"`]/);
-    if (xyw?.[1]) return xyw[1];
-
-    // Pattern 4: <meta name="_gg_fb" content="KEY">
-    const ggfb = html.match(/<meta name="_gg_fb" content="([a-zA-Z0-9]+)">/);
-    if (ggfb?.[1]) return ggfb[1];
-
-    // Pattern 5: <div data-dpi="KEY"
-    const dpi = html.match(/<div\s+data-dpi="([0-9a-zA-Z]+)"/);
-    if (dpi?.[1]) return dpi[1];
-
-    // Pattern 6: <script nonce="KEY">
-    const nonce = html.match(/<script nonce="([0-9a-zA-Z]+)"/);
-    if (nonce?.[1]) return nonce[1];
-
+    for (const re of patterns) {
+        const m = html.match(re);
+        if (m?.[1]) return m[1];
+    }
     throw new Error('Could not extract MegaCloud client key from embed page');
 }
 

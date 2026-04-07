@@ -2,16 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { ArrowLeftIcon, ListBulletIcon, XMarkIcon, PlayIcon } from '@heroicons/react/24/outline';
-import HLSPlayer from '@/components/HLSPlayer';
 
 interface ServerOption { server: string; embedUrl: string; }
-interface HLSSource { url: string; isM3U8: boolean; quality?: string; }
-interface Subtitle { url: string; lang: string; default: boolean; }
-
-type StreamData =
-    | { type: 'hls'; sources: HLSSource[]; subtitles: Subtitle[]; server: string }
-    | { type: 'embed'; servers: ServerOption[] };
-
+interface StreamData { type: 'embed'; servers: ServerOption[]; }
 interface Episode { id: string; number: number; title: string; image: string | null; }
 
 const SERVER_LABELS: Record<string, string> = {
@@ -26,7 +19,6 @@ export default function AnimeWatchPage() {
 
     const [streamData, setStreamData] = useState<StreamData | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
-    const [selectedQuality, setSelectedQuality] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -39,25 +31,21 @@ export default function AnimeWatchPage() {
     const title = animeTitle ? decodeURIComponent(animeTitle) : 'Anime';
     const currentEpNum = parseInt(ep) || 0;
 
+    // Load stream
     useEffect(() => {
         if (!episodeId) return;
         setLoading(true);
         setError('');
         setStreamData(null);
         setActiveIndex(0);
-        setSelectedQuality('');
 
         axios.get(`/api/anime/stream?episodeId=${encodeURIComponent(episodeId)}&dub=${dub || 'false'}`)
-            .then(r => {
-                setStreamData(r.data);
-                if (r.data.type === 'hls') {
-                    setSelectedQuality(r.data.sources?.[0]?.quality || 'auto');
-                }
-            })
+            .then(r => setStreamData(r.data))
             .catch(() => setError('Failed to load stream.'))
             .finally(() => setLoading(false));
     }, [episodeId, dub]);
 
+    // Load episodes when drawer opens (lazy — only once)
     useEffect(() => {
         if (!drawerOpen || episodes.length > 0 || !animeId) return;
         setEpsLoading(true);
@@ -67,6 +55,7 @@ export default function AnimeWatchPage() {
             .finally(() => setEpsLoading(false));
     }, [drawerOpen, animeId]);
 
+    // Scroll active episode into view when drawer opens
     useEffect(() => {
         if (drawerOpen && activeEpRef.current) {
             setTimeout(() => activeEpRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
@@ -76,16 +65,12 @@ export default function AnimeWatchPage() {
     const handleEpisodeClick = (ep: Episode) => {
         setDrawerOpen(false);
         const titleParam = encodeURIComponent(title);
-        router.push(`/anime/watch/${encodeURIComponent(ep.id)}?animeId=${animeId}&ep=${ep.number}&dub=${dub || 'false'}&title=${titleParam}`);
+        router.push(
+            `/anime/watch/${encodeURIComponent(ep.id)}?animeId=${animeId}&ep=${ep.number}&dub=${dub || 'false'}&title=${titleParam}`
+        );
     };
 
-    // For HLS: current source based on quality selection
-    const hlsSrc = streamData?.type === 'hls'
-        ? (streamData.sources.find(s => s.quality === selectedQuality) || streamData.sources[0])?.url
-        : null;
-
-    // For embed: active server
-    const activeServer = streamData?.type === 'embed' ? streamData.servers[activeIndex] : null;
+    const activeServer = streamData?.servers[activeIndex];
 
     return (
         <div className="min-h-screen bg-black flex flex-col">
@@ -109,41 +94,21 @@ export default function AnimeWatchPage() {
                     Episodes
                 </button>
 
-                {/* HLS quality selector */}
-                {streamData?.type === 'hls' && streamData.sources.length > 1 && (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-zinc-500 text-xs">Quality:</span>
-                        <select
-                            value={selectedQuality}
-                            onChange={e => setSelectedQuality(e.target.value)}
-                            className="bg-zinc-800 text-white text-xs px-2 py-1 rounded border border-zinc-700 outline-none cursor-pointer"
-                        >
-                            {streamData.sources.map(s => (
-                                <option key={s.quality} value={s.quality}>{s.quality}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-
-                {/* Embed server selector */}
-                {streamData?.type === 'embed' && streamData.servers.length > 0 && (
+                {/* Server selector */}
+                {streamData && streamData.servers.length > 0 && (
                     <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-zinc-500 text-xs mr-1">Server:</span>
                         {streamData.servers.map((s, i) => (
                             <button
                                 key={s.server}
                                 onClick={() => setActiveIndex(i)}
-                                className={`text-xs px-3 py-1 rounded transition font-medium ${i === activeIndex ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}
+                                className={`text-xs px-3 py-1 rounded transition font-medium ${i === activeIndex ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                                    }`}
                             >
                                 {SERVER_LABELS[s.server.toLowerCase()] ?? s.server}
                             </button>
                         ))}
                     </div>
-                )}
-
-                {/* HLS server label */}
-                {streamData?.type === 'hls' && (
-                    <span className="text-zinc-500 text-xs shrink-0">{SERVER_LABELS[streamData.server.toLowerCase()] ?? streamData.server}</span>
                 )}
             </div>
 
@@ -168,22 +133,7 @@ export default function AnimeWatchPage() {
                         </button>
                     </div>
                 )}
-
-                {/* HLS player */}
-                {!loading && !error && streamData?.type === 'hls' && hlsSrc && (
-                    <div className="w-full h-full" style={{ minHeight: 'calc(100vh - 53px)' }}>
-                        <HLSPlayer
-                            key={hlsSrc}
-                            src={hlsSrc}
-                            autoPlay
-                            className="h-full"
-                            onFatalError={() => setError('Stream failed. Try refreshing.')}
-                        />
-                    </div>
-                )}
-
-                {/* Embed iframe fallback */}
-                {!loading && !error && streamData?.type === 'embed' && activeServer && (
+                {!loading && !error && activeServer && (
                     <iframe
                         key={activeServer.embedUrl}
                         src={activeServer.embedUrl}
@@ -191,17 +141,21 @@ export default function AnimeWatchPage() {
                         style={{ minHeight: 'calc(100vh - 53px)' }}
                         allowFullScreen
                         allow="autoplay; fullscreen; picture-in-picture"
-                        referrerPolicy="no-referrer"
+                        referrerPolicy="origin"
                         title={`${title} Episode ${ep}`}
                     />
                 )}
             </div>
 
-            {/* Episodes drawer */}
+            {/* Episodes drawer overlay */}
             {drawerOpen && (
                 <div className="fixed inset-0 z-50 flex">
+                    {/* Backdrop */}
                     <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-                    <div className="w-80 max-w-full bg-zinc-950 border-l border-zinc-800 flex flex-col h-full overflow-hidden">
+
+                    {/* Drawer panel */}
+                    <div className="w-80 max-w-full bg-zinc-900 flex flex-col h-full overflow-hidden">
+                        {/* Drawer header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
                             <div>
                                 <p className="text-white text-sm font-semibold">Episodes</p>
@@ -211,6 +165,8 @@ export default function AnimeWatchPage() {
                                 <XMarkIcon className="w-5 h-5" />
                             </button>
                         </div>
+
+                        {/* Episode list */}
                         <div className="flex-1 overflow-y-auto scrollbar-modern">
                             {epsLoading && (
                                 <div className="flex items-center justify-center py-16">
@@ -230,8 +186,10 @@ export default function AnimeWatchPage() {
                                         key={ep.id}
                                         ref={isActive ? activeEpRef : undefined}
                                         onClick={() => handleEpisodeClick(ep)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition border-b border-zinc-900 group ${isActive ? 'bg-zinc-800' : 'hover:bg-zinc-900'}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition border-b border-zinc-900 group ${isActive ? 'bg-zinc-800' : 'hover:bg-blue-900/20'
+                                            }`}
                                     >
+                                        {/* Thumbnail */}
                                         <div className="relative shrink-0 w-20 h-12 rounded overflow-hidden bg-zinc-800">
                                             {ep.image
                                                 ? <img src={ep.image} alt={`Ep ${ep.number}`} className="w-full h-full object-cover" />
@@ -243,9 +201,15 @@ export default function AnimeWatchPage() {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Info */}
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-white'}`}>Episode {ep.number}</p>
-                                            {ep.title && <p className="text-zinc-500 text-xs truncate mt-0.5">{ep.title}</p>}
+                                            <p className={`text-sm font-medium ${isActive ? 'text-blue-400' : 'text-white'}`}>
+                                                Episode {ep.number}
+                                            </p>
+                                            {ep.title && (
+                                                <p className="text-zinc-500 text-xs truncate mt-0.5">{ep.title}</p>
+                                            )}
                                         </div>
                                     </button>
                                 );
