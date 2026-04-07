@@ -16,18 +16,20 @@ const Series = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 30; // 6 columns x 5 rows = 30 items per page
 
-    // Auto-fetch more series on initial load and periodically
+    // Auto-fetch more series on initial load
     useEffect(() => {
         const autoFetch = async () => {
-            // Fetch multiple pages on initial load
-            for (let i = 0; i < 5; i++) {
-                await axios.get(`/api/movies/series?fetchMore=true`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            try {
+                for (let i = 0; i < 5; i++) {
+                    await axios.get(`/api/movies/series?fetchMore=true`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                mutate();
+            } catch {
+                // Background fetch failed — not critical, existing data still shows
             }
-            mutate();
         };
 
-        // Only run once on mount
         if (popularSeries.length < 100) {
             autoFetch();
         }
@@ -134,7 +136,7 @@ const Series = () => {
     // Get all items for grid view (flatten all sections) and remove duplicates
     const allItemsWithDuplicates = filteredSections.flatMap(section => section.data);
     const allItems = Array.from(
-        new Map(allItemsWithDuplicates.map(item => [item.id, item])).values()
+        new Map(allItemsWithDuplicates.filter(item => item?.id).map(item => [item.id, item])).values()
     );
 
     // Calculate pagination
@@ -214,7 +216,7 @@ const Series = () => {
                             <>
                                 {filteredSections.map((section) => (
                                     section.data.length > 0 && (
-                                        <MovieList key={section.title} title={section.title} data={section.data} />
+                                        <MovieList key={section.title} title={section.title} data={section.data.filter((item: any) => item?.id)} />
                                     )
                                 ))}
                                 {filteredSections.every(section => section.data.length === 0) && (

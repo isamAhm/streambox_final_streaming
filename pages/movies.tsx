@@ -127,7 +127,7 @@ const Movies = () => {
     // Get all items for grid view and remove duplicates
     const allItemsWithDuplicates = filteredSections.flatMap(section => section.data);
     const allItems = Array.from(
-        new Map(allItemsWithDuplicates.map(item => [item.id, item])).values()
+        new Map(allItemsWithDuplicates.filter(item => item?.id).map(item => [item.id, item])).values()
     );
 
     // Calculate pagination
@@ -207,7 +207,7 @@ const Movies = () => {
                             <>
                                 {filteredSections.map((section) => (
                                     section.data.length > 0 && (
-                                        <MovieList key={section.title} title={section.title} data={section.data} />
+                                        <MovieList key={section.title} title={section.title} data={section.data.filter((item: any) => item?.id)} />
                                     )
                                 ))}
                                 {filteredSections.every(section => section.data.length === 0) && (

@@ -130,7 +130,7 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
             <div style={{ minWidth: `${visibleRange.start * 200}px` }} />
           )}
 
-          {(useVirtualScrolling ? visibleData : data).map((movie, idx) => {
+          {(useVirtualScrolling ? visibleData : data).filter(movie => movie?.id).map((movie, idx) => {
             const index = useVirtualScrolling ? visibleRange.start + idx : idx;
             const isHovered = hoveredIndex === index;
             const isBeforeHovered = hoveredIndex !== null && index < hoveredIndex;
