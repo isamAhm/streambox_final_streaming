@@ -1,7 +1,5 @@
-import { useCallback, useState } from 'react';
-import { NextPageContext } from 'next';
-import { useSignIn, useSignUp } from '@clerk/nextjs';
-import { getAuth } from '@clerk/nextjs/server';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { useSignIn, useSignUp, useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
@@ -11,25 +9,30 @@ import Input from '@/components/Input';
 import Head from 'next/head';
 import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
 
-export async function getServerSideProps(context: NextPageContext) {
-  const { userId } = getAuth(context.req as any);
-
-  if (userId) {
-    return {
-      redirect: {
-        destination: '/profiles',
-        permanent: false,
-      }
-    }
-  }
-
-  return {
-    props: {}
-  }
+export async function getServerSideProps() {
+  return { props: {} }
 }
 
 const Auth = () => {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  // Client-side redirect if already signed in
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/profiles');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  // Verification modal state
+  const [showVerify, setShowVerify] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const verifyInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showVerify) setTimeout(() => verifyInputRef.current?.focus(), 100);
+  }, [showVerify]);
 
   // Login fields
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -56,6 +59,26 @@ const Auth = () => {
 
   const { isLoaded: isSignInLoaded, signIn, setActive } = useSignIn();
   const { isLoaded: isSignUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp();
+
+  const submitVerification = useCallback(async () => {
+    if (!verifyCode.trim() || verifying) return;
+    setVerifying(true);
+    const verifyToast = toast.loading('Verifying...');
+    try {
+      const verifyResult = await signUp!.attemptEmailAddressVerification({ code: verifyCode.trim() });
+      if (verifyResult.status === 'complete') {
+        await setActiveSignUp!({ session: verifyResult.createdSessionId });
+        toast.success('Email verified! Welcome!', { id: verifyToast });
+        router.push('/profiles');
+      } else {
+        toast.error('Verification incomplete. Please try again.', { id: verifyToast });
+      }
+    } catch (err: any) {
+      toast.error(err?.errors?.[0]?.message || 'Invalid code. Please try again.', { id: verifyToast });
+    } finally {
+      setVerifying(false);
+    }
+  }, [verifyCode, verifying, signUp, setActiveSignUp, router]);
 
   const login = useCallback(async () => {
     try {
@@ -165,29 +188,7 @@ const Auth = () => {
         // Email verification required
         await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
         toast.success('Verification code sent to your email', { id: loadingToast });
-
-        // Prompt user for verification code
-        const code = prompt('Please enter the verification code sent to your email:');
-
-        if (code) {
-          try {
-            const verifyToast = toast.loading('Verifying...');
-            const verifyResult = await signUp.attemptEmailAddressVerification({
-              code: code.trim()
-            });
-
-            if (verifyResult.status === 'complete') {
-              await setActiveSignUp({ session: verifyResult.createdSessionId });
-              toast.success('Email verified!', { id: verifyToast });
-              router.push('/profiles');
-            } else {
-              toast.error('Verification incomplete. Please try again.', { id: verifyToast });
-            }
-          } catch (verifyError: any) {
-            console.error('Verification error:', verifyError);
-            toast.error('Invalid verification code. Please try again.');
-          }
-        }
+        setShowVerify(true);
       } else {
         console.log('Sign up status:', result.status);
         toast('Please check your email for verification.', { id: loadingToast, icon: 'ℹ️' });
@@ -250,6 +251,54 @@ const Auth = () => {
       <Head>
         <title>StreamBox - Login or Register</title>
       </Head>
+
+      {/* Email Verification Modal */}
+      {showVerify && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8 w-full max-w-sm mx-4 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-white text-xl font-semibold">Check your email</h3>
+              <p className="text-zinc-400 text-sm mt-2">
+                We sent a verification code to<br />
+                <span className="text-white font-medium">{email}</span>
+              </p>
+            </div>
+
+            {/* 6-digit code input */}
+            <input
+              ref={verifyInputRef}
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={verifyCode}
+              onChange={e => setVerifyCode(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={e => e.key === 'Enter' && submitVerification()}
+              placeholder="000000"
+              className="w-full text-center text-3xl font-mono tracking-[0.5em] bg-zinc-800 border border-zinc-600 focus:border-blue-500 text-white rounded-xl px-4 py-4 outline-none transition placeholder:text-zinc-600"
+            />
+
+            <button
+              onClick={submitVerification}
+              disabled={verifyCode.length < 6 || verifying}
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition"
+            >
+              {verifying ? 'Verifying...' : 'Verify Email'}
+            </button>
+
+            <button
+              onClick={() => { setShowVerify(false); setVerifyCode(''); }}
+              className="w-full mt-3 text-zinc-500 hover:text-zinc-300 text-sm transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(0,0,0,0.7)_80%)]">
         <div className="bg-black w-full h-full bg-opacity-50">
           <nav className="px-12 py-5 flex justify-center items-center relative">

@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/router';
 
 import Navbar from '@/components/Navbar';
 import Billboard from '@/components/Billboard';
@@ -20,6 +22,8 @@ const InfoModal = dynamic(() => import('@/components/InfoModal'), {
 
 
 const Home = () => {
+  const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
   const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError, mutate: mutateContinueWatching } = useContinueWatching();
@@ -28,6 +32,13 @@ const Home = () => {
   const { isOpen, closeModal } = useInfoModalStore();
 
   const isLoading = isMoviesLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
+
+  // Redirect unauthenticated users to landing page
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace('/home');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   // Revalidate continue watching when component mounts (user returns from watch page)
   useEffect(() => {

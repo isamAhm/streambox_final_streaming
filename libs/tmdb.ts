@@ -182,7 +182,8 @@ class TMDBService {
         return {
             title: tmdbMovie.title,
             description: tmdbMovie.overview,
-            thumbnailUrl: this.getImageUrl(tmdbMovie.poster_path),
+            thumbnailUrl: this.getImageUrl(tmdbMovie.poster_path, 'w500'),
+            backdropUrl: tmdbMovie.backdrop_path ? this.getBackdropUrl(tmdbMovie.backdrop_path, 'w1280') : null,
             genre: tmdbMovie.genres.map(g => g.name).join(', '),
             duration: `${tmdbMovie.runtime} minutes`,
             imdbId: tmdbMovie.imdb_id,
@@ -199,7 +200,8 @@ class TMDBService {
         return {
             title: tmdbShow.name,
             description: tmdbShow.overview,
-            thumbnailUrl: this.getImageUrl(tmdbShow.poster_path),
+            thumbnailUrl: this.getImageUrl(tmdbShow.poster_path, 'w500'),
+            backdropUrl: tmdbShow.backdrop_path ? this.getBackdropUrl(tmdbShow.backdrop_path, 'w1280') : null,
             genre: tmdbShow.genres.map(g => g.name).join(', '),
             duration: `${runtime} minutes per episode`,
             imdbId: tmdbShow.external_ids?.imdb_id,

@@ -38,11 +38,14 @@ const Billboard = React.memo(() => {
 
   return (
     <div className="relative h-[56.25vw]">
-      {/* Poster Image - Always shown first, then fades when trailer loads */}
+      {/* Backdrop Image — wide landscape, high quality. Falls back to poster if no backdrop */}
       <div
-        className={`absolute inset-0 w-full h-[56.25vw] object-cover brightness-[60%] bg-cover bg-center transition-opacity duration-1000 ${showTrailer && trailerUrl ? 'opacity-0' : 'opacity-100'
-          }`}
-        style={{ backgroundImage: `url(${data?.thumbnailUrl})` }}
+        className={`absolute inset-0 w-full h-[56.25vw] bg-cover bg-center transition-opacity duration-1000 ${showTrailer && trailerUrl ? 'opacity-0' : 'opacity-100'}`}
+        style={{
+          backgroundImage: `url(${data?.backdropUrl || data?.thumbnailUrl})`,
+          backgroundPosition: 'center top',
+          filter: 'brightness(55%)',
+        }}
       />
 
       {/* YouTube Trailer - Fades in when loaded */}

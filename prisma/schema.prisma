@@ -66,6 +66,7 @@ model Movie {
   description  String
   videoUrl     String
   thumbnailUrl String
+  backdropUrl  String?  // Wide landscape image for billboard (1280px)
   genre        String
   duration     String
   imdbId       String   @unique
