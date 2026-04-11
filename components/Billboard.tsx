@@ -10,31 +10,38 @@ const Billboard = React.memo(() => {
   const { data } = useBillboard();
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
-  const [trailerFetched, setTrailerFetched] = useState(false);
+  const [trailerFetchedId, setTrailerFetchedId] = useState<string | null>(null);
 
   const handleOpenModal = useCallback(() => {
     openModal(data?.id);
   }, [openModal, data?.id]);
 
-  // Fetch trailer when billboard data loads (only once per movie)
+  // Re-fetch trailer whenever the billboard movie changes, with sessionStorage cache
   useEffect(() => {
-    if (data?.id && !trailerFetched) {
-      setShowTrailer(false);
-      setTrailerUrl(null);
-      setTrailerFetched(true);
+    if (!data?.id || data.id === trailerFetchedId) return;
 
-      axios.get(`/api/movies/trailer/${data.id}`)
-        .then(response => {
-          setTrailerUrl(response.data.trailerUrl);
-          // Small delay to ensure smooth transition
-          setTimeout(() => setShowTrailer(true), 500);
-        })
-        .catch(error => {
-          console.log('No trailer available:', error);
-          setTrailerUrl(null);
-        });
+    setShowTrailer(false);
+    setTrailerFetchedId(data.id);
+
+    // Check sessionStorage first — avoids redundant TMDB calls during navigation
+    const cacheKey = `trailer:${data.id}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      setTrailerUrl(cached);
+      setTimeout(() => setShowTrailer(true), 500);
+      return;
     }
-  }, [data?.id, trailerFetched]);
+
+    setTrailerUrl(null);
+    axios.get(`/api/movies/trailer/${data.id}`)
+      .then(response => {
+        const url = response.data.trailerUrl;
+        if (url) sessionStorage.setItem(cacheKey, url);
+        setTrailerUrl(url);
+        setTimeout(() => setShowTrailer(true), 500);
+      })
+      .catch(() => setTrailerUrl(null));
+  }, [data?.id]);
 
   return (
     <div className="relative h-[56.25vw]">

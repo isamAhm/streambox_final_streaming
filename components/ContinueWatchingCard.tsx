@@ -10,6 +10,7 @@ interface ContinueWatchingCardProps {
         id: string;
         title: string;
         thumbnailUrl: string;
+        backdropUrl?: string | null;
         genre: string;
         duration: string;
         year?: string;
@@ -59,10 +60,10 @@ const ContinueWatchingCard: React.FC<ContinueWatchingCardProps> = ({ data, onRem
             {/* Main Card - Landscape 16:9 */}
             <div className="relative w-full aspect-video rounded-md overflow-hidden bg-zinc-800">
                 <img
-                    src={data.thumbnailUrl}
+                    src={data.backdropUrl || data.thumbnailUrl}
                     alt={data.title}
                     draggable={false}
-                    className="object-cover w-full h-full transition-transform duration-300 md:group-hover:scale-110"
+                    className="object-cover object-center w-full h-full transition-transform duration-300 md:group-hover:scale-110"
                 />
 
                 {/* Dark overlay on hover - Desktop only */}
