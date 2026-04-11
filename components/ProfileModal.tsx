@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useUser, useClerk, useSession } from '@clerk/nextjs';
 import toast from 'react-hot-toast';
+import { mutate } from 'swr';
 import { Button } from './button';
 import Input from './Input';
 
@@ -176,6 +177,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
       }
 
       toast.success('Profile updated!', { id: t });
+      // Reload Clerk user so the updated name/image is reflected immediately,
+      // then revalidate the SWR cache so AccountMenu picks up the changes.
+      await user.reload();
+      await mutate('/api/current');
       handleClose();
     } catch (err: any) {
       toast.error(err?.errors?.[0]?.message || 'Failed to update profile', { id: t });
