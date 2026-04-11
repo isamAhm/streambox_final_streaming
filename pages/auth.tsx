@@ -119,9 +119,9 @@ const Auth = () => {
       if (error?.errors?.[0]) {
         const clerkError = error.errors[0];
         if (clerkError.code === 'form_identifier_not_found') {
-          errorMessage = 'No account found with this email or username.';
+          errorMessage = 'Invalid credentials. Please try again.'; //No account found with this email or username.
         } else if (clerkError.code === 'form_password_incorrect') {
-          errorMessage = 'Incorrect password. Please try again.';
+          errorMessage = 'Invalid credentials. Please try again.'; //Incorrect password. Please try again.
         } else if (clerkError.message) {
           errorMessage = clerkError.message;
         }
