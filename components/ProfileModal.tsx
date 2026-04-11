@@ -149,6 +149,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     }
   }, [user, isLoaded, hasPassword, currentPassword, newPassword, confirmPassword, signOut, onClose]);
 
+  // Detect if any profile field has changed from the original
+  const hasChanges = user ? (
+    firstName.trim() !== (user.firstName || '') ||
+    lastName.trim() !== (user.lastName || '') ||
+    username.trim() !== (user.username || '') ||
+    email !== (user.primaryEmailAddress?.emailAddress || '')
+  ) : false;
+
   const handleUpdate = useCallback(async () => {
     if (!user || !isLoaded) return;
     setIsUpdating(true);
@@ -307,8 +315,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
         <div className="flex gap-3 mt-6">
           <Button
             onClick={handleUpdate}
-            disabled={isUpdating || isUploading || isChangingPassword}
-            className="flex-1 bg-blue-700/50 hover:bg-blue-700/60 border-2 border-white/20 text-white"
+            disabled={isUpdating || isUploading || isChangingPassword || !hasChanges}
+            className="flex-1 bg-blue-700/50 hover:bg-blue-700/60 border-2 border-white/20 text-white disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isUpdating ? 'Updating...' : 'Update Profile'}
           </Button>
