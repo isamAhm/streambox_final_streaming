@@ -22,8 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!tmdbId) return res.status(200).json({ movie, cast: [], crew: [], seasons: [], similar: [] });
 
-        // Fetch credits + similar in parallel
-        const [credits, similar, seasonDetails] = await Promise.all([
+        // Fetch credits + similar + videos in parallel
+        const [credits, similar, seasonDetails, videos] = await Promise.all([
             tmdbService['fetch']<any>(
                 isTV ? `/tv/${tmdbId}/credits` : `/movie/${tmdbId}/credits`
             ).catch(() => ({ cast: [], crew: [] })),
@@ -33,6 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             isTV
                 ? tmdbService['fetch']<any>(`/tv/${tmdbId}`).catch(() => null)
                 : Promise.resolve(null),
+            tmdbService['fetch']<any>(
+                isTV ? `/tv/${tmdbId}/videos` : `/movie/${tmdbId}/videos`
+            ).catch(() => ({ results: [] })),
         ]);
 
         const cast = (credits.cast || []).slice(0, 20).map((c: any) => ({
@@ -74,8 +77,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             year: (s.release_date || s.first_air_date || '').slice(0, 4),
         }));
 
+        const trailers = (videos.results || [])
+            .filter((v: any) => v.site === 'YouTube' && ['Trailer', 'Teaser'].includes(v.type))
+            .slice(0, 4)
+            .map((v: any) => ({
+                key: v.key,
+                name: v.name,
+                type: v.type,
+                embedUrl: `https://www.youtube-nocookie.com/embed/${v.key}?rel=0&modestbranding=1`,
+            }));
+
         res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
-        return res.status(200).json({ movie, cast, crew, seasons, similar: similarTitles });
+        return res.status(200).json({ movie, cast, crew, seasons, similar: similarTitles, trailers });
     } catch (err) {
         console.error('[details]', err);
         return res.status(500).end();

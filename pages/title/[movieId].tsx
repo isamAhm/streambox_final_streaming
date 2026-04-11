@@ -11,6 +11,7 @@ interface CastMember { id: number; name: string; character: string; profileUrl: 
 interface CrewMember { id: number; name: string; job: string; }
 interface Season { number: number; name: string; episodeCount: number; airDate: string; posterUrl: string | null; overview: string; }
 interface Similar { tmdbId: number; title: string; posterUrl: string | null; rating: number; year: string; }
+interface Trailer { key: string; name: string; type: string; embedUrl: string; }
 interface Movie { id: string; title: string; description: string; thumbnailUrl: string; backdropUrl?: string; genre: string; duration: string; year: number; rating: number; type: string; imdbId: string; }
 
 interface DetailData {
@@ -19,6 +20,7 @@ interface DetailData {
     crew: CrewMember[];
     seasons: Season[];
     similar: Similar[];
+    trailers: Trailer[];
 }
 
 export default function TitleDetailPage() {
@@ -32,8 +34,13 @@ export default function TitleDetailPage() {
     useEffect(() => {
         if (!movieId) return;
         setLoading(true);
+        // window.scrollTo({ top: 0, behavior: 'instant' });
         axios.get(`/api/movies/details/${movieId}`)
-            .then(r => setData(r.data))
+            .then(r => {
+                setData(r.data);
+                // Scroll to top after data loads to prevent layout-shift scroll jump
+                // window.scrollTo({ top: 0, behavior: 'instant' });
+            })
             .catch(console.error)
             .finally(() => setLoading(false));
     }, [movieId]);
@@ -66,7 +73,15 @@ export default function TitleDetailPage() {
             <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-32 relative z-10 pb-20">
                 {/* Back button — sits just above the poster */}
                 <button
-                    onClick={() => router.back()}
+                    onClick={() => {
+                        // window.scrollTo({ top: 0 });
+                        // if (window.history.length > 1) {
+                        //     router.back();
+                        // } else {
+                        //     router.push('/');
+                        // }
+                        router.push('/');
+                    }}
                     className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm transition mb-4 backdrop-blur-sm border-r-2 border-t-2 border-blue-800 rounded-md px-1"
                 >
                     <ArrowLeftIcon className="w-4 h-4" /> Back
@@ -160,6 +175,35 @@ export default function TitleDetailPage() {
                 {/* Tabs */}
                 {!loading && data && (
                     <div className="mt-12">
+
+                        {/* Trailers — shown above tabs when available */}
+                        {data.trailers && data.trailers.length > 0 && (
+                            <div className="mb-10">
+                                <h2 className="text-white text-xl font-bold mb-4">Trailers & Clips</h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {data.trailers.map(trailer => (
+                                        <div key={trailer.key} className="flex flex-col gap-2">
+                                            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900">
+                                                <iframe
+                                                    src={trailer.embedUrl}
+                                                    title={trailer.name}
+                                                    className="w-full h-full"
+                                                    frameBorder="0"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                    loading="lazy"
+                                                />
+                                            </div>
+                                            <p className="text-zinc-400 text-xs truncate">
+                                                <span className="text-zinc-600 mr-1">{trailer.type}</span>
+                                                {trailer.name}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex gap-1 border-b border-zinc-800 mb-8">
                             {(['cast', ...(data.seasons.length > 0 ? ['seasons'] : []), 'similar'] as const).map(tab => (
                                 <button
