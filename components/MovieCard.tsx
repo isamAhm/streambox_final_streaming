@@ -65,14 +65,14 @@ const MovieCard: React.FC<MovieCardProps> = React.memo(({ data }) => {
         }
       `}>
         <div className="bg-zinc-900 rounded-md shadow-2xl overflow-hidden">
-          {/* Landscape Image - 16:9 */}
+          {/* Landscape Image - 16:9 — uses backdrop for a proper wide shot */}
           <div className="relative w-full aspect-video">
             <img
               onClick={redirectToWatch}
-              src={data.thumbnailUrl}
+              src={data.backdropUrl || data.thumbnailUrl}
               alt={data.title}
               draggable={false}
-              className="cursor-pointer object-cover w-full h-full"
+              className="cursor-pointer object-cover object-center w-full h-full"
             />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
