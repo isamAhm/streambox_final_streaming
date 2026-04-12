@@ -6,6 +6,7 @@ export default authMiddleware({
     '/auth',
     '/sso-callback',
     '/api/webhooks/(.*)',
+    '/api/anime/embed',
   ],
 });
 

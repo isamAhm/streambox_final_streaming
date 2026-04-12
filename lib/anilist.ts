@@ -88,6 +88,35 @@ export async function getAnimeInfo(id: number) {
     return data.Media;
 }
 
+export async function getAnimeEpisodeThumbnails(id: number): Promise<Map<number, string>> {
+    const map = new Map<number, string>();
+    try {
+        const data = await gql(`
+            query($id: Int) {
+                Media(id: $id, type: ANIME) {
+                    streamingEpisodes {
+                        title
+                        thumbnail
+                        url
+                        site
+                    }
+                }
+            }
+        `, { id });
+        const episodes = data?.Media?.streamingEpisodes || [];
+        episodes.forEach((ep: any, index: number) => {
+            // AniList streamingEpisodes are ordered — use index+1 as episode number
+            // Also try to parse episode number from title (e.g. "Episode 5 - Title")
+            const epNumMatch = ep.title?.match(/Episode\s+(\d+)/i);
+            const epNum = epNumMatch ? parseInt(epNumMatch[1]) : index + 1;
+            if (ep.thumbnail) map.set(epNum, ep.thumbnail);
+        });
+    } catch {
+        // Non-critical — silently skip
+    }
+    return map;
+}
+
 // Normalize AniList media to a consistent shape
 export function normalizeAnime(media: any) {
     return {

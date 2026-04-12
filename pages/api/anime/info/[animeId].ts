@@ -1,11 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getAnimeInfo, normalizeAnime } from '@/lib/anilist';
+import { getAnimeInfo, normalizeAnime, getAnimeEpisodeThumbnails } from '@/lib/anilist';
 import { HiAnime } from 'aniwatch';
-import { ANIME } from '@consumet/extensions';
 import { getEpisodes } from '@/lib/aniwatchClient';
 
 const hianime = new HiAnime.Scraper();
-const animePahe = new ANIME.AnimePahe();
 const TIMEOUT_MS = 12000;
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -15,42 +13,22 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
     ]);
 }
 
-/** Fetch episode thumbnails from AnimePahe, keyed by episode number */
-async function getPaheThumbnails(title: string): Promise<Map<number, string>> {
-    const map = new Map<number, string>();
-    try {
-        const searchRes = await withTimeout(animePahe.search(title), TIMEOUT_MS);
-        const match = (searchRes.results as any[])?.[0];
-        if (!match?.id) return map;
-
-        const paheInfo = await withTimeout(animePahe.fetchAnimeInfo(match.id), TIMEOUT_MS) as any;
-        for (const ep of (paheInfo.episodes || [])) {
-            if (ep.number && ep.image) {
-                // Proxy through our image proxy so hotlink protection is bypassed
-                map.set(ep.number, `/api/anime/proxy?url=${encodeURIComponent(ep.image)}`);
-            }
-        }
-    } catch {
-        // thumbnails are non-critical — silently skip
-    }
-    return map;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') return res.status(405).end();
 
     const { animeId } = req.query as { animeId: string };
+    const anilistId = parseInt(animeId);
 
     try {
-        const raw = await getAnimeInfo(parseInt(animeId));
+        const raw = await getAnimeInfo(anilistId);
         const info = normalizeAnime(raw);
 
         let episodes: any[] = [];
         const searchTitle = raw.title?.english || raw.title?.romaji;
 
         if (searchTitle) {
-            // Fetch aniwatch episodes + AnimePahe thumbnails in parallel
-            const [aniwatchEps, paheThumbs] = await Promise.all([
+            // Fetch aniwatch episodes + AniList thumbnails in parallel
+            const [aniwatchEps, anilistThumbs] = await Promise.all([
                 withTimeout(
                     hianime.search(searchTitle).then(r => {
                         const results = r.animes || [];
@@ -60,11 +38,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
                         const normTitle = normalise(searchTitle);
 
-                        // Score each result: prefer exact title match + closest episode count
                         const scored = results.map((a: any) => {
                             const titleMatch = normalise(a.name) === normTitle ? 100 : 0;
                             const epCount = (a.episodes?.sub ?? a.episodes?.dub ?? 0) as number;
-                            // Penalise by distance from expected episode count (0 expected = ignore)
                             const epScore = expectedEps > 0
                                 ? Math.max(0, 50 - Math.abs(epCount - expectedEps))
                                 : 0;
@@ -77,7 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }),
                     TIMEOUT_MS
                 ).catch(() => []),
-                getPaheThumbnails(searchTitle),
+                // Use AniList streamingEpisodes for thumbnails — reliable, no scraping
+                getAnimeEpisodeThumbnails(anilistId),
             ]);
 
             episodes = (aniwatchEps as any[]).map((ep: any) => ({
@@ -85,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 number: ep.number,
                 title: ep.title,
                 isFiller: ep.isFiller,
-                image: paheThumbs.get(ep.number) ?? null,
+                image: anilistThumbs.get(ep.number) ?? null,
             }));
         }
 

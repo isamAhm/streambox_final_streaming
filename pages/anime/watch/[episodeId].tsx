@@ -3,13 +3,22 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import { ArrowLeftIcon, ListBulletIcon, XMarkIcon, PlayIcon } from '@heroicons/react/24/outline';
 
-interface ServerOption { server: string; embedUrl: string; }
-interface StreamData { type: 'embed'; servers: ServerOption[]; }
+interface ServerOption { name: string; serverId: number; embedUrl?: string; }
+interface StreamData { servers: ServerOption[]; }
 interface Episode { id: string; number: number; title: string; image: string | null; }
 
 const SERVER_LABELS: Record<string, string> = {
     vidsrc: 'VidSrc', megacloud: 'MegaCloud', 't-cloud': 'T-Cloud',
 };
+
+/** Fetch embed URL via our proxy — avoids CORS and keeps IP consistent */
+async function fetchEmbedUrl(serverId: number): Promise<string> {
+    const res = await fetch(`/api/anime/embed?serverId=${serverId}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data?.embedUrl) throw new Error('No embed URL');
+    return data.embedUrl as string;
+}
 
 export default function AnimeWatchPage() {
     const router = useRouter();
@@ -19,7 +28,9 @@ export default function AnimeWatchPage() {
 
     const [streamData, setStreamData] = useState<StreamData | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [activeEmbedUrl, setActiveEmbedUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [embedLoading, setEmbedLoading] = useState(false);
     const [error, setError] = useState('');
 
     // Episodes drawer
@@ -31,12 +42,13 @@ export default function AnimeWatchPage() {
     const title = animeTitle ? decodeURIComponent(animeTitle) : 'Anime';
     const currentEpNum = parseInt(ep) || 0;
 
-    // Load stream
+    // Load server list from our API
     useEffect(() => {
         if (!episodeId) return;
         setLoading(true);
         setError('');
         setStreamData(null);
+        setActiveEmbedUrl(null);
         setActiveIndex(0);
 
         axios.get(`/api/anime/stream?episodeId=${encodeURIComponent(episodeId)}&dub=${dub || 'false'}`)
@@ -44,6 +56,31 @@ export default function AnimeWatchPage() {
             .catch(() => setError('Failed to load stream.'))
             .finally(() => setLoading(false));
     }, [episodeId, dub]);
+
+    // When server list loads or active server changes, fetch embed URL client-side
+    useEffect(() => {
+        if (!streamData?.servers?.length) return;
+        const server = streamData.servers[activeIndex];
+        if (!server) return;
+
+        // Check if we already have the embed URL cached on the server object
+        if (server.embedUrl) {
+            setActiveEmbedUrl(server.embedUrl);
+            return;
+        }
+
+        setEmbedLoading(true);
+        setActiveEmbedUrl(null);
+
+        fetchEmbedUrl(server.serverId)
+            .then(url => {
+                // Cache on the server object so switching back doesn't re-fetch
+                server.embedUrl = url;
+                setActiveEmbedUrl(url);
+            })
+            .catch(() => setError('Failed to load embed. Try another server.'))
+            .finally(() => setEmbedLoading(false));
+    }, [streamData, activeIndex]);
 
     // Load episodes when drawer opens (lazy — only once)
     useEffect(() => {
@@ -100,12 +137,12 @@ export default function AnimeWatchPage() {
                         <span className="text-zinc-500 text-xs mr-1">Server:</span>
                         {streamData.servers.map((s, i) => (
                             <button
-                                key={s.server}
-                                onClick={() => setActiveIndex(i)}
+                                key={s.name}
+                                onClick={() => { setActiveIndex(i); setError(''); }}
                                 className={`text-xs px-3 py-1 rounded transition font-medium ${i === activeIndex ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                                     }`}
                             >
-                                {SERVER_LABELS[s.server.toLowerCase()] ?? s.server}
+                                {SERVER_LABELS[s.name.toLowerCase()] ?? s.name}
                             </button>
                         ))}
                     </div>
@@ -114,7 +151,7 @@ export default function AnimeWatchPage() {
 
             {/* Player */}
             <div className="flex-1 flex items-center justify-center bg-black">
-                {loading && (
+                {(loading || embedLoading) && (
                     <div className="flex items-center justify-center h-64">
                         <div className="relative w-12 h-12">
                             <div className="absolute inset-0 border-4 border-blue-800/30 rounded-full" />
@@ -133,10 +170,10 @@ export default function AnimeWatchPage() {
                         </button>
                     </div>
                 )}
-                {!loading && !error && activeServer && (
+                {!loading && !embedLoading && !error && activeEmbedUrl && (
                     <iframe
-                        key={activeServer.embedUrl}
-                        src={activeServer.embedUrl}
+                        key={activeEmbedUrl}
+                        src={activeEmbedUrl}
                         className="w-full h-full"
                         style={{ minHeight: 'calc(100vh - 53px)' }}
                         allowFullScreen

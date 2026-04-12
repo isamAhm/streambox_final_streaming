@@ -1,13 +1,14 @@
 /**
- * Anime stream API — aniwatchtv.to
- * Returns all available embed URLs (VidSrc, MegaCloud, T-Cloud).
+ * Anime stream API — returns server IDs only.
+ * The browser fetches embed URLs directly from aniwatchtv.to
+ * so MegaCloud sees the user's IP (not Vercel's), preventing "file not found".
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getEpisodeServers, getEmbedLink } from '@/lib/aniwatchClient';
+import { getEpisodeServers } from '@/lib/aniwatchClient';
 import { cache } from '@/lib/cache';
 
-const STREAM_CACHE_TTL = 20 * 60 * 1000;
+const SERVERS_CACHE_TTL = 20 * 60 * 1000;
 const TIMEOUT_MS = 12000;
 const SERVER_PRIORITY = ['vidsrc', 'megacloud', 't-cloud'];
 
@@ -27,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const category: 'sub' | 'dub' = dub === 'true' ? 'dub' : 'sub';
-    const cacheKey = `aw:embed:${episodeId}:${category}`;
+    const cacheKey = `aw:servers:${episodeId}:${category}`;
     const cached = cache.get<object>(cacheKey);
     if (cached) return res.status(200).json(cached);
 
@@ -37,38 +38,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!available.length) throw new Error('No servers available');
 
-        // Fetch embed links for all servers in parallel
-        const sorted = SERVER_PRIORITY
-            .map(name => available.find(s => s.serverName.toLowerCase().includes(name)))
-            .filter(Boolean) as typeof available;
+        // Sort by priority, return server IDs — browser will fetch embed URLs directly
+        const sorted = [
+            ...SERVER_PRIORITY
+                .map(name => available.find(s => s.serverName.toLowerCase().includes(name)))
+                .filter(Boolean),
+            ...available.filter(s => !SERVER_PRIORITY.some(p => s.serverName.toLowerCase().includes(p))),
+        ] as typeof available;
 
-        // Also include any servers not in our priority list
-        for (const s of available) {
-            if (!sorted.includes(s)) sorted.push(s);
-        }
+        const result = {
+            servers: sorted.map(s => ({
+                name: s.serverName,
+                serverId: s.serverId,
+            })),
+        };
 
-        const results = await Promise.allSettled(
-            sorted.map(async entry => {
-                const embedUrl = await withTimeout(getEmbedLink(entry.serverId), TIMEOUT_MS);
-                return { server: entry.serverName, embedUrl };
-            })
-        );
-
-        const servers_out = results
-            .filter((r): r is PromiseFulfilledResult<{ server: string; embedUrl: string }> => r.status === 'fulfilled')
-            .map(r => r.value);
-
-        if (!servers_out.length) throw new Error('All servers failed to return embed links');
-
-        const result = { type: 'embed' as const, servers: servers_out };
-        cache.set(cacheKey, result, STREAM_CACHE_TTL);
+        cache.set(cacheKey, result, SERVERS_CACHE_TTL);
+        // No-cache on the response — embed URLs are session-scoped
+        res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json(result);
     } catch (err: any) {
         const isTimeout = err?.message === 'timeout';
         console.error('[stream] Fatal:', err?.message);
         return res.status(isTimeout ? 504 : 500).json({
             error: isTimeout ? 'Stream timed out. Try again.' : 'Failed to fetch stream',
-            detail: err?.message,
         });
     }
 }
