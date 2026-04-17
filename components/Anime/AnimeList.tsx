@@ -4,6 +4,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { PlayIcon } from '@heroicons/react/24/solid';
 
 export interface AnimeItem {
+    description: JSX.Element;
+    genres: any;
     id: string;
     title: { romaji: string; english: string | null; native?: string };
     image: string;

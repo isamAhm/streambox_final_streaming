@@ -19,6 +19,7 @@ async function gql(query: string, variables: Record<string, unknown>) {
 
 const MEDIA_FIELDS = `
     id
+    idMal
     title { romaji english native }
     description(asHtml: false)
     coverImage { extraLarge large }
@@ -121,6 +122,7 @@ export async function getAnimeEpisodeThumbnails(id: number): Promise<Map<number,
 export function normalizeAnime(media: any) {
     return {
         id: String(media.id),
+        idMal: media.idMal || null,
         title: media.title,
         image: media.coverImage?.extraLarge || media.coverImage?.large || '',
         cover: media.bannerImage || media.coverImage?.extraLarge || '',

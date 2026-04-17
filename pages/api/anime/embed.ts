@@ -16,9 +16,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const embedUrl = await getEmbedLink(parseInt(serverId));
-        // Never cache — embed URLs expire quickly
+        // Wrap through our proxy so MegaCloud sees aniwatchtv.to as the origin
+        const proxiedUrl = `/api/anime/megacloud-proxy?url=${encodeURIComponent(embedUrl)}`;
         res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json({ embedUrl });
+        return res.status(200).json({ embedUrl: proxiedUrl });
     } catch (err: any) {
         console.error('[embed]', err?.message);
         return res.status(500).json({ error: 'Failed to get embed URL' });

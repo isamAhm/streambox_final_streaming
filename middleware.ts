@@ -7,6 +7,12 @@ export default authMiddleware({
     '/sso-callback',
     '/api/webhooks/(.*)',
     '/api/anime/embed',
+    '/api/anime/megacloud-proxy',
+    '/api/anime/stream',
+    '/api/anime/info/(.*)',
+    '/api/anime/tmdb-info/(.*)',
+    '/api/anime/browse',
+    '/api/anime/episodes/(.*)',
   ],
 });
 

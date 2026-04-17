@@ -48,6 +48,11 @@ export class StreamingService {
                     name: '2Embed',
                     url: `https://www.2embed.cc/embed/${fullId}`,
                     priority: 5
+                },
+                {
+                    name: 'SmashyStream',
+                    url: `https://player.smashy.stream/movie/${fullId}`,
+                    priority: 6
                 }
             );
         }
@@ -56,6 +61,42 @@ export class StreamingService {
             throw new Error('IMDB ID or TMDB ID is required');
         }
 
+        return sources.sort((a, b) => a.priority - b.priority);
+    }
+
+    /**
+     * Get streaming sources for anime — VidKing is primary,
+     * with 2Embed, VidSrc and others as fallbacks.
+     */
+    getAnimeStreamSources(
+        imdbId: string,
+        season: number = 1,
+        episode: number = 1,
+        tmdbId?: number
+    ): StreamingSource[] {
+        const sources: StreamingSource[] = [];
+        const fullId = imdbId && !imdbId.startsWith('tt') ? `tt${imdbId}` : imdbId;
+
+        // VidKing as primary (needs TMDB ID)
+        if (tmdbId) {
+            sources.push({
+                name: 'VidKing',
+                url: `https://www.vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=3B82F6&autoPlay=true&nextEpisode=true&episodeSelector=true`,
+                priority: 1,
+            });
+        }
+
+        if (fullId) {
+            sources.push(
+                { name: '2Embed', url: `https://www.2embed.cc/embedtv/${fullId}&s=${season}&e=${episode}`, priority: 2 },
+                { name: 'VidSrc.xyz', url: `https://vidsrc.xyz/embed/tv/${fullId}/${season}/${episode}`, priority: 3 },
+                { name: 'VidSrc.to', url: `https://vidsrc.to/embed/tv/${fullId}/${season}/${episode}`, priority: 4 },
+                { name: 'VidSrc.me', url: `https://vidsrc.me/embed/tv?imdb=${fullId}&season=${season}&episode=${episode}`, priority: 5 },
+                { name: 'SmashyStream', url: `https://player.smashy.stream/tv/${fullId}?s=${season}&e=${episode}`, priority: 6 },
+            );
+        }
+
+        if (sources.length === 0) throw new Error('At least TMDB ID or IMDB ID is required');
         return sources.sort((a, b) => a.priority - b.priority);
     }
 
@@ -104,12 +145,18 @@ export class StreamingService {
                     name: '2Embed',
                     url: `https://www.2embed.cc/embedtv/${fullId}&s=${season}&e=${episode}`,
                     priority: 5
+                },
+                {
+                    name: 'SmashyStream',
+                    url: `https://player.smashy.stream/tv/${fullId}?s=${season}&e=${episode}`,
+                    priority: 6
                 }
             );
         }
 
+        // VidKing works with TMDB only — always available if tmdbId provided
         if (sources.length === 0) {
-            throw new Error('IMDB ID or TMDB ID is required');
+            throw new Error('At least TMDB ID or IMDB ID is required');
         }
 
         return sources.sort((a, b) => a.priority - b.priority);
