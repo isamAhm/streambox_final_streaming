@@ -122,7 +122,7 @@ const MovieList: React.FC<MovieListProps> = ({ data, title }) => {
         <div
           ref={listRef}
           onScroll={checkScrollPosition}
-          className="flex gap-2 overflow-x-scroll scrollbar-hide scroll-smooth pb-14 pt-8 px-12"
+          className="flex gap-2 overflow-x-scroll scrollbar-hide scroll-smooth pb-14 pt-8 px-0 md:px-12 "
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* Spacer for virtual scrolling */}
