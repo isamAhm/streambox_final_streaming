@@ -1,8 +1,8 @@
 /**
- * /api/movies/top-rated
- * Fetches TMDB top-rated movies + TV shows, upserts missing items into DB,
- * returns real DB records so watch/modal/detail all work.
- * Cached 24h — top rated changes very slowly.
+ * /api/movies/trending
+ * 1. Fetches TMDB trending this week (movies + TV)
+ * 2. For items not in DB, fetches their IMDB ID and upserts them
+ * 3. Returns full DB records so watch/modal/detail all work
  */
 import { NextApiRequest, NextApiResponse } from 'next';
 import prismadb from '@/libs/prismadb';
@@ -17,6 +17,7 @@ async function fetchTmdbJson(url: string) {
     return res.json();
 }
 
+/** Fetch IMDB ID for a TMDB item */
 async function getImdbId(tmdbId: number, type: 'movie' | 'tv'): Promise<string | null> {
     try {
         const data = await fetchTmdbJson(
@@ -34,22 +35,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try { await serverAuth(req); } catch { return res.status(401).end(); }
 
     if (!TMDB_KEY) {
+        // Fallback: just return DB by popularity
         const fallback = await prismadb.movie.findMany({
-            where: { rating: { gte: 7.5 } },
-            orderBy: { rating: 'desc' },
+            where: { popularity: { gt: 0 } },
+            orderBy: { popularity: 'desc' },
             take: 20,
         });
         return res.status(200).json(fallback);
     }
 
     try {
-        // Fetch top-rated movies + TV in parallel
+        // 1. Fetch TMDB trending this week (movies + TV in parallel)
         const [movData, tvData] = await Promise.all([
-            fetchTmdbJson(`https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&page=1`),
-            fetchTmdbJson(`https://api.themoviedb.org/3/tv/top_rated?api_key=${TMDB_KEY}&page=1`),
+            fetchTmdbJson(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}`),
+            fetchTmdbJson(`https://api.themoviedb.org/3/trending/tv/week?api_key=${TMDB_KEY}`),
         ]);
 
-        // Interleave movies and TV
+        // Interleave movies and TV (alternating) so the row is mixed
         const movResults = (movData.results || []).slice(0, 15);
         const tvResults = (tvData.results || []).slice(0, 15);
         const tmdbItems: Array<{ raw: any; type: 'movie' | 'tv' }> = [];
@@ -59,23 +61,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (tvResults[i]) tmdbItems.push({ raw: tvResults[i], type: 'tv' });
         }
 
-        // Check which already exist in DB
+        // 2. Check which tmdbIds already exist in DB
         const tmdbIds = tmdbItems.map(i => i.raw.id);
         const existing = await prismadb.movie.findMany({
             where: { tmdbId: { in: tmdbIds } },
         });
         const existingMap = new Map(existing.map(m => [m.tmdbId, m]));
 
-        // Upsert missing items
+        // 3. Upsert missing items (fetch IMDB ID + full details, then insert)
         const toInsert = tmdbItems.filter(i => !existingMap.has(i.raw.id));
 
         if (toInsert.length > 0) {
+            // Fetch details + external IDs in parallel (batched to avoid rate limits)
             const upsertResults = await Promise.allSettled(
                 toInsert.map(async ({ raw, type }) => {
                     const imdbId = await getImdbId(raw.id, type);
-                    if (!imdbId) return null;
+                    if (!imdbId) return null; // skip items without IMDB ID
 
-                    let duration = '', genre = '', year = '';
+                    // Fetch full details for runtime/genres
+                    let duration = '';
+                    let genre = '';
+                    let year = '';
                     try {
                         const details = await fetchTmdbJson(
                             `https://api.themoviedb.org/3/${type}/${raw.id}?api_key=${TMDB_KEY}`
@@ -94,10 +100,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return prismadb.movie.upsert({
                         where: { imdbId },
                         update: {
+                            // Update images + popularity in case they changed
                             thumbnailUrl: raw.poster_path ? `${TMDB_IMG}/w500${raw.poster_path}` : '',
                             backdropUrl: raw.backdrop_path ? `${TMDB_IMG}/w1280${raw.backdrop_path}` : null,
-                            rating: raw.vote_average || null,
                             popularity: raw.popularity || 0,
+                            rating: raw.vote_average || null,
                         },
                         create: {
                             title: raw.title || raw.name,
@@ -118,6 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 })
             );
 
+            // Add newly upserted items to the existing map
             upsertResults.forEach(result => {
                 if (result.status === 'fulfilled' && result.value) {
                     existingMap.set(result.value.tmdbId, result.value);
@@ -125,18 +133,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
         }
 
-        // Return in TMDB top-rated order
+        // 4. Return DB records in TMDB trending order
         const ordered = tmdbItems
             .map(i => existingMap.get(i.raw.id))
             .filter(Boolean) as typeof existing;
 
-        res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600');
+        res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
         return res.status(200).json(ordered);
     } catch (err: any) {
-        console.error('[top-rated]', err?.message);
+        console.error('[trending]', err?.message);
+        // Fallback to DB
         const fallback = await prismadb.movie.findMany({
-            where: { rating: { gte: 7.5 } },
-            orderBy: { rating: 'desc' },
+            where: { popularity: { gt: 0 } },
+            orderBy: { popularity: 'desc' },
             take: 20,
         });
         return res.status(200).json(fallback);

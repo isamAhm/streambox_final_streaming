@@ -13,6 +13,7 @@ import useContinueWatching from '@/hooks/useContinueWatching';
 import useSeries from '@/hooks/useSeries';
 import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
+import useTrending from '@/hooks/useTrending';
 import { LoadingAnimation } from '@/components/loading-animation';
 
 // Lazy load InfoModal since it's not always needed
@@ -25,13 +26,14 @@ const Home = () => {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
+  const { data: trending = [], isLoading: isTrendingLoading } = useTrending();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
   const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError, mutate: mutateContinueWatching } = useContinueWatching();
   const { data: series = [], isLoading: isSeriesLoading } = useSeries();
   const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRated();
   const { isOpen, closeModal } = useInfoModalStore();
 
-  const isLoading = isMoviesLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
+  const isLoading = isMoviesLoading || isTrendingLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
 
   // Redirect unauthenticated users to landing page
   useEffect(() => {
@@ -60,8 +62,8 @@ const Home = () => {
               <ContinueWatchingList data={continueWatching} />
             )}
 
-            {/* Trending Now */}
-            <MovieList title="Trending Now" data={movies} />
+            {/* Trending Now — from TMDB trending this week */}
+            <MovieList title="Trending Now" data={trending.length > 0 ? trending : movies} />
 
             {/* My List */}
             {favorites.length > 0 && (

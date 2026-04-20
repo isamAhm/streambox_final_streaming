@@ -18,6 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Invalid movie ID' });
         }
 
+        // Guard against fake TMDB IDs (e.g. "tmdb-movie-123") that aren't valid ObjectIds
+        const isValidObjectId = /^[a-f\d]{24}$/i.test(movieId);
+        if (!isValidObjectId) {
+            return res.status(404).json({ error: 'Movie not found' });
+        }
+
         // Get movie from database
         const movie = await prismadb.movie.findUnique({
             where: { id: movieId }

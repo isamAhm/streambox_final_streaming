@@ -76,12 +76,12 @@ const InfoModal: React.FC<InfoModalProps> = React.memo(({ visible, onClose }) =>
   const currentTrailerUrl = getTrailerUrlWithMute(trailerUrl, isMuted);
 
   return (
-    <div className="z-50 bg-black/80 flex justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0">
+    <div className="z-50 bg-black/80 flex justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 p-4">
       {/* Fixed width modal — prevents shape shifting as content loads */}
-      <div className="relative w-[80vw] max-w-3xl mx-auto rounded-lg overflow-hidden glass-card border border-white/10 drop-shadow-2xl">
+      <div className="relative w-full max-w-3xl mx-auto rounded-lg overflow-hidden glass-card border border-white/10 drop-shadow-2xl max-h-[90vh] flex flex-col">
 
-        {/* Media section — fixed height, never collapses */}
-        <div className="relative h-96 bg-zinc-900 overflow-hidden">
+        {/* Media section — shorter on mobile */}
+        <div className="relative h-48 md:h-96 bg-zinc-900 overflow-hidden shrink-0">
           {isLoading ? (
             <div className="absolute inset-0 animate-pulse bg-zinc-800" />
           ) : (
@@ -112,18 +112,18 @@ const InfoModal: React.FC<InfoModalProps> = React.memo(({ visible, onClose }) =>
               )}
 
               {/* Title + actions overlay */}
-              <div className="absolute bottom-6 left-8 right-16 z-10">
-                <p className="text-white text-2xl md:text-4xl font-bold mb-4 drop-shadow-xl line-clamp-2">
+              <div className="absolute bottom-3 md:bottom-6 left-4 md:left-8 right-12 md:right-16 z-10">
+                <p className="text-white text-lg md:text-4xl font-bold mb-2 md:mb-4 drop-shadow-xl line-clamp-2">
                   {data?.title}
                 </p>
-                <div className="flex flex-row gap-3 items-center flex-wrap">
+                <div className="flex flex-row gap-2 md:gap-3 items-center flex-wrap">
                   <PlayButton movieId={data?.id} />
                   <WatchlistButton movieId={data?.id} movieTitle={data?.title} />
                   <button
                     onClick={() => { handleClose(); router.push(`/title/${data?.id}`); }}
-                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-medium px-4 py-2 rounded-md transition border border-white/20"
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs md:text-sm font-medium px-3 md:px-4 py-1.5 md:py-2 rounded-md transition border border-white/20"
                   >
-                    <InformationCircleIcon className="w-5 h-5" />
+                    <InformationCircleIcon className="w-4 h-4 md:w-5 md:h-5" />
                     More Details
                   </button>
                 </div>
@@ -154,8 +154,8 @@ const InfoModal: React.FC<InfoModalProps> = React.memo(({ visible, onClose }) =>
           )}
         </div>
 
-        {/* Info section — fixed min/max height with scroll for long descriptions */}
-        <div className="px-8 py-6 min-h-[160px] max-h-[260px] overflow-y-auto scrollbar-modern">
+        {/* Info section — scrollable, smaller on mobile */}
+        <div className="px-4 md:px-8 py-4 md:py-6 min-h-[100px] max-h-[160px] md:max-h-[260px] overflow-y-auto scrollbar-modern">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               <div className="flex gap-3">

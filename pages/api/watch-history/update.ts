@@ -20,6 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Movie ID is required' });
         }
 
+        // Guard against non-ObjectId strings (e.g. fake TMDB IDs)
+        if (!/^[a-f\d]{24}$/i.test(movieId)) {
+            return res.status(404).json({ error: 'Movie not found' });
+        }
+
         if (typeof progress !== 'number' || progress < 0 || progress > 100) {
             return res.status(400).json({ error: 'Progress must be a number between 0 and 100' });
         }

@@ -90,7 +90,7 @@ export default function CinemaRoomLobby() {
                         <p className="text-gray-400 text-sm">
                             Paste a room link or code to join a friend&apos;s Cinema Room.
                         </p>
-                        <form onSubmit={handleJoin} className="flex flex-col gap-3 mt-auto">
+                        <form onSubmit={(e) => { e.preventDefault(); setShowComingSoon(true); }} className="flex flex-col gap-3 mt-auto">
                             <input
                                 type="text"
                                 value={joinCode}
@@ -103,10 +103,9 @@ export default function CinemaRoomLobby() {
                             )}
                             <button
                                 type="submit"
-                                disabled={joining}
-                                className="w-full bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition"
+                                className="w-full bg-blue-700 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition"
                             >
-                                {joining ? 'Checking...' : 'Join Room'}
+                                Join Room
                             </button>
                         </form>
                     </div>
@@ -157,7 +156,7 @@ export default function CinemaRoomLobby() {
 
                         <button
                             onClick={() => setShowComingSoon(false)}
-                            className="w-full bg-white hover:bg-gray-200 text-black font-semibold py-3 rounded-lg transition"
+                            className="w-full bg-blue-700 hover:text-white hover:bg-blue-800 text-black font-semibold py-3 rounded-lg transition"
                         >
                             Got it
                         </button>

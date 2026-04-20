@@ -14,6 +14,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await serverAuth(req);
 
         const { movieId } = req.query as { movieId: string };
+
+        // Guard against non-ObjectId strings
+        if (!/^[a-f\d]{24}$/i.test(movieId)) {
+            return res.status(404).json({ error: 'Not found' });
+        }
+
         const movie = await prismadb.movie.findUnique({ where: { id: movieId } });
         if (!movie) return res.status(404).json({ error: 'Not found' });
 
