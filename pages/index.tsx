@@ -6,10 +6,14 @@ import Navbar from '@/components/Navbar';
 import Billboard from '@/components/Billboard';
 import MovieList from '@/components/MovieList';
 import ContinueWatchingList from '@/components/ContinueWatchingList';
+import BrowseByProvider from '@/components/BrowseByProvider';
+import Footer from '@/components/Footer';
 import dynamic from 'next/dynamic';
 import useMovieList from '@/hooks/useMovieList';
 import useFavorites from '@/hooks/useFavorites';
 import useContinueWatching from '@/hooks/useContinueWatching';
+import useGuestContinueWatching from '@/hooks/useGuestContinueWatching';
+import { useGuestMode } from '@/contexts/GuestModeContext';
 import useSeries from '@/hooks/useSeries';
 import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
@@ -25,15 +29,20 @@ const InfoModal = dynamic(() => import('@/components/InfoModal'), {
 const Home = () => {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { isGuestMode } = useGuestMode();
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: trending = [], isLoading: isTrendingLoading } = useTrending();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
   const { data: continueWatching = [], isLoading: isContinueWatchingLoading, error: continueWatchingError, mutate: mutateContinueWatching } = useContinueWatching();
+  const { guestData: guestContinueWatching } = useGuestContinueWatching();
   const { data: series = [], isLoading: isSeriesLoading } = useSeries();
   const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRated();
   const { isOpen, closeModal } = useInfoModalStore();
 
   const isLoading = isMoviesLoading || isTrendingLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
+
+  // Combine regular and guest continue watching data
+  const activeContinueWatching = isGuestMode ? guestContinueWatching : continueWatching;
 
   // Redirect unauthenticated users to landing page
   useEffect(() => {
@@ -44,8 +53,10 @@ const Home = () => {
 
   // Revalidate continue watching when component mounts (user returns from watch page)
   useEffect(() => {
-    mutateContinueWatching();
-  }, [mutateContinueWatching]);
+    if (!isGuestMode) {
+      mutateContinueWatching();
+    }
+  }, [mutateContinueWatching, isGuestMode]);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -57,16 +68,19 @@ const Home = () => {
           <Navbar />
           <Billboard />
           <div className="pb-40">
+            {/* Browse by Provider Section */}
+            <BrowseByProvider />
+
             {/* Continue Watching Section */}
-            {continueWatching && continueWatching.length > 0 && (
-              <ContinueWatchingList data={continueWatching} />
+            {activeContinueWatching && activeContinueWatching.length > 0 && (
+              <ContinueWatchingList data={activeContinueWatching} />
             )}
 
             {/* Trending Now — from TMDB trending this week */}
             <MovieList title="Trending Now" data={trending.length > 0 ? trending : movies} />
 
-            {/* My List */}
-            {favorites.length > 0 && (
+            {/* My List - Hidden in guest mode */}
+            {!isGuestMode && favorites.length > 0 && (
               <MovieList title="My List" data={favorites} />
             )}
 
@@ -80,6 +94,7 @@ const Home = () => {
               <MovieList title="Top Rated" data={topRated} />
             )}
           </div>
+          <Footer />
         </>
       )}
     </div>

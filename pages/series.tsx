@@ -4,6 +4,7 @@ import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import MovieList from '@/components/MovieList';
 import InfoModal from '@/components/InfoModal';
+import Footer from '@/components/Footer';
 import useSeries from '@/hooks/useSeries';
 import useSeriesByGenre from '@/hooks/useSeriesByGenre';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
@@ -329,6 +330,8 @@ const Series = () => {
                             </>
                         )}
                     </div>
+
+                    <Footer />
 
                     <style jsx>{`
                         .scrollbar-hide::-webkit-scrollbar {

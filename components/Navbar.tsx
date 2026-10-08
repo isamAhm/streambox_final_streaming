@@ -11,12 +11,14 @@ import ProfileModal from '@/components/ProfileModal';
 import NotificationCenter from '@/components/NotificationCenter';
 import useNotifications from '@/hooks/useNotifications';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
+import { useGuestMode } from '@/contexts/GuestModeContext';
 
 const TOP_OFFSET = 66;
 
 const Navbar = () => {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { isGuestMode } = useGuestMode();
   const { openModal } = useInfoModalStore();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -34,10 +36,10 @@ const Navbar = () => {
 
   const { notifications, unreadCount, mutate: mutateNotifications } = useNotifications();
 
-  // Get user profile image from Clerk with fallback
-  const profileImage = isLoaded && user?.imageUrl
-    ? user.imageUrl
-    : '/images/default-blue.png';
+  // Get user profile image with guest mode consideration
+  const profileImage = isGuestMode
+    ? '/images/default-blue.png'
+    : (isLoaded && user?.imageUrl ? user.imageUrl : '/images/default-blue.png');
 
   useEffect(() => {
     const handleScroll = () => {

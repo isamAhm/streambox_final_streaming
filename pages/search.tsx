@@ -5,6 +5,7 @@ import { getAuth } from '@clerk/nextjs/server';
 import Navbar from '@/components/Navbar';
 import SearchMovieCard from '@/components/SearchMovieCard';
 import SearchMovieCardSkeleton from '@/components/SearchMovieCardSkeleton';
+import Footer from '@/components/Footer';
 import dynamic from 'next/dynamic';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import axios from 'axios';
@@ -258,6 +259,7 @@ const Search = () => {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

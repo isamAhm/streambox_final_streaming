@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import '../styles/globals.css';
 import { LoadingAnimation } from '@/components/loading-animation';
 import ClerkErrorBoundary from '@/components/ClerkErrorBoundary';
+import { GuestModeProvider } from '@/contexts/GuestModeContext';
 import useDevToolsProtection from '@/hooks/useDevToolsProtection';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
@@ -127,36 +128,38 @@ export default function App({
   return (
     <ClerkProvider {...pageProps}>
       <ClerkErrorBoundary>
-        <Head>
-          <title>StreamBox</title>
-        </Head>
+        <GuestModeProvider>
+          <Head>
+            <title>StreamBox</title>
+          </Head>
 
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#18181b',
-              color: '#fff',
-              border: '1px solid #27272a',
-            },
-            success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#18181b',
+                color: '#fff',
+                border: '1px solid #27272a',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
               },
-            },
-          }}
-        />
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
 
-        {isLoading && <LoadingAnimation />}
-        <Component {...pageProps} />
+          {isLoading && <LoadingAnimation />}
+          <Component {...pageProps} />
+        </GuestModeProvider>
       </ClerkErrorBoundary>
     </ClerkProvider>
   );

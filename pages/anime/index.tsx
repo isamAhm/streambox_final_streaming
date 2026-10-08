@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import AnimeList, { AnimeItem } from '@/components/Anime/AnimeList';
+import Footer from '@/components/Footer';
 import { MagnifyingGlassIcon, PlayIcon, InformationCircleIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { LoadingAnimation } from '@/components/loading-animation';
 
@@ -271,6 +272,7 @@ export default function AnimePage() {
                     )}
                 </>
             )}
+            <Footer />
         </div>
     );
 }

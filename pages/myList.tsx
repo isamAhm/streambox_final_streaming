@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import MovieList from '@/components/MovieList';
 import InfoModal from '@/components/InfoModal';
+import Footer from '@/components/Footer';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import useWatchlist from '@/hooks/useWatchlist';
 import useFavorites from '@/hooks/useFavorites';
@@ -254,6 +255,8 @@ const MyList = () => {
                     </>
                 )}
             </div>
+
+            <Footer />
 
             <style jsx>{`
                 .scrollbar-hide::-webkit-scrollbar {

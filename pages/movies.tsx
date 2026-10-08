@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
 import MovieList from '@/components/MovieList';
 import InfoModal from '@/components/InfoModal';
+import Footer from '@/components/Footer';
 import useMoviesOnly from '@/hooks/useMoviesOnly';
 import useMoviesByGenre from '@/hooks/useMoviesByGenre';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
@@ -317,6 +318,8 @@ const Movies = () => {
                             </>
                         )}
                     </div>
+
+                    <Footer />
 
                     <style jsx>{`
                         .scrollbar-hide::-webkit-scrollbar {
