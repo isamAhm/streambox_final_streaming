@@ -18,6 +18,7 @@ const Billboard = React.memo(() => {
   const [trailersEnabled, setTrailersEnabled] = useState(false);
   const [autoRotateInterval, setAutoRotateInterval] = useState<NodeJS.Timeout | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   const handleOpenModal = useCallback(() => {
     if (movieQueue.length > 0) {
@@ -30,6 +31,30 @@ const Billboard = React.memo(() => {
     const savedPreference = localStorage.getItem('billboard-trailers-enabled');
     setTrailersEnabled(savedPreference === 'true');
   }, []);
+
+  // Initialize movie queue from trending movies with random starting position
+  useEffect(() => {
+    if (trendingMovies.length > 0) {
+      // Use trending movies as the main queue (take first 8-10 for optimal performance)
+      const queue = trendingMovies.slice(0, 8);
+      setMovieQueue(queue);
+
+      // Randomly select starting index on page refresh
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      setCurrentIndex(randomIndex);
+    }
+  }, [trendingMovies]);
+
+  // Get current main movie
+  const mainMovie = movieQueue.length > 0 ? movieQueue[currentIndex] : null;
+
+  // Fade the billboard in once the first movie is available
+  useEffect(() => {
+    if (mainMovie?.id && !isReady) {
+      const frame = requestAnimationFrame(() => setIsReady(true));
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [mainMovie?.id, isReady]);
 
   // Toggle trailer preference and save to localStorage
   const toggleTrailers = useCallback(() => {
@@ -66,7 +91,7 @@ const Billboard = React.memo(() => {
         clearInterval(autoRotateInterval);
       }
     };
-  }, [trailersEnabled, movieQueue.length]); // Remove autoRotateInterval from dependencies to avoid infinite loop
+  }, [trailersEnabled, movieQueue.length, autoRotateInterval]);
 
   // Smooth transition effect when currentIndex changes
   useEffect(() => {
@@ -80,7 +105,7 @@ const Billboard = React.memo(() => {
 
       return () => clearTimeout(timer);
     }
-  }, [currentIndex]);
+  }, [currentIndex, movieQueue.length]);
 
   // Clear auto-rotation on manual navigation
   const clearAutoRotation = useCallback(() => {
@@ -89,19 +114,6 @@ const Billboard = React.memo(() => {
       setAutoRotateInterval(null);
     }
   }, [autoRotateInterval]);
-
-  // Initialize movie queue from trending movies
-  useEffect(() => {
-    if (trendingMovies.length > 0) {
-      // Use trending movies as the main queue (take first 8-10 for optimal performance)
-      const queue = trendingMovies.slice(0, 8);
-      setMovieQueue(queue);
-      setCurrentIndex(0);
-    }
-  }, [trendingMovies]);
-
-  // Get current main movie
-  const mainMovie = movieQueue.length > 0 ? movieQueue[currentIndex] : null;
 
   // Get next 3 movies in the queue (circular)
   const getUpNextMovies = useCallback(() => {
@@ -192,27 +204,25 @@ const Billboard = React.memo(() => {
   }
 
   return (
-    <div className="relative h-[56.25vw] overflow-hidden">
-      {/* Main Backdrop - with smooth transitions */}
+    <div className={`relative h-[56.25vw] overflow-hidden transition-opacity duration-1000 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Main Backdrop */}
       <div
-        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-700 ease-in-out transform ${showTrailer && trailerUrl && trailersEnabled ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-          }`}
+        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-700 ease-in-out ${showTrailer && trailerUrl && trailersEnabled ? 'opacity-0' : 'opacity-100'}`}
         style={{
           backgroundImage: `url(${mainMovie?.backdropUrl || mainMovie?.thumbnailUrl})`,
           backgroundPosition: 'center top',
         }}
       >
-        {/* Dark gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       </div>
 
       {/* YouTube Trailer */}
       {trailerUrl && trailersEnabled && (
-        <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${showTrailer ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
+        <div className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${showTrailer ? 'opacity-100' : 'opacity-0'}`}>
           <iframe
             src={trailerUrl}
-            className="w-full h-full object-cover brightness-[60%]"
+            className="absolute inset-0 w-full h-full border-0 brightness-[60%]"
             allow="autoplay; encrypted-media"
             title={`${mainMovie?.title} Trailer`}
             style={{ pointerEvents: 'none' }}

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Play, Info } from 'lucide-react';
 import MovieCard from '@/components/MovieCard';
 import Navbar from '@/components/Navbar';
-import { Movie } from '@/types';
+import { MovieInterface } from '@/types';
 
 interface ProviderPageProps {
     providerId: string;
@@ -33,7 +33,7 @@ const providerData: { [key: string]: { name: string; color: string; icon: string
 
 const ProviderPage: React.FC<ProviderPageProps> = ({ providerId, providerName }) => {
     const router = useRouter();
-    const [movies, setMovies] = useState<Movie[]>([]);
+    const [movies, setMovies] = useState<MovieInterface[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -254,7 +254,7 @@ const ProviderPage: React.FC<ProviderPageProps> = ({ providerId, providerName })
                             <div className="bg-gray-800/40 rounded-lg p-8 max-w-md mx-auto">
                                 <h3 className="text-xl font-semibold text-white mb-2">No Content Available</h3>
                                 <p className="text-gray-400">
-                                    We couldn't find any content for {provider.name} at the moment.
+                                    We couldn&apos;t find any content for {provider.name} at the moment.
                                 </p>
                             </div>
                         </motion.div>

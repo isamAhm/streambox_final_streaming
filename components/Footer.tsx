@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 const links = [
     { label: 'Home', href: '/' },
@@ -20,7 +21,7 @@ const Footer: React.FC = () => {
                     {/* Top row: logo + links */}
                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                         {/* Logo */}
-                        <a href="/" className="flex items-center gap-3 group">
+                        <Link href="/" className="flex items-center gap-3 group">
                             <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center transition-colors group-hover:bg-white/10">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -43,18 +44,18 @@ const Footer: React.FC = () => {
                             <span className="text-white font-semibold text-base tracking-tight">
                                 StreamBox
                             </span>
-                        </a>
+                        </Link>
 
                         {/* Navigation links */}
                         <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-zinc-400">
                             {links.map((link) => (
-                                <a
+                                <Link
                                     key={link.label}
                                     href={link.href}
                                     className="transition-colors hover:text-white"
                                 >
                                     {link.label}
-                                </a>
+                                </Link>
                             ))}
                         </nav>
                     </div>
@@ -65,7 +66,7 @@ const Footer: React.FC = () => {
                     {/* Bottom row: disclaimer + credit */}
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <p className="text-zinc-500 text-[11px] leading-relaxed max-w-xl">
-                            StreamBox doesn't host any files — all content comes from
+                            StreamBox doesn&apos;t host any files — all content comes from
                             third-party providers.
                         </p>
 
