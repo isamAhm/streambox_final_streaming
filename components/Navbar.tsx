@@ -193,6 +193,8 @@ const Navbar = () => {
           {/* <NavbarItem label="New & Popular" href="/newPopular" active={router.pathname === '/newPopular'} /> */}
           <NavbarItem label="My List" href="/myList" active={router.pathname === '/myList'} />
           <NavbarItem label="Anime" href="/anime" active={router.pathname.startsWith('/anime')} />
+          <NavbarItem label="Live Sports" href="/live-sports" active={router.pathname === '/live-sports'} />
+          <NavbarItem label="Live TV" href="/live-tv" active={router.pathname === '/live-tv'} />
           <NavbarItem label="Cinema Room" href="/cinema-room" active={router.pathname.startsWith('/cinema-room')} />
           {/* <NavbarItem
             label="Browse by Languages"

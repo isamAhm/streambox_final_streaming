@@ -18,6 +18,7 @@ import useSeries from '@/hooks/useSeries';
 import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import useTrending from '@/hooks/useTrending';
+import useBillboardBackdrop from '@/hooks/useBillboardBackdrop';
 import { LoadingAnimation } from '@/components/loading-animation';
 import {
   useTrendingMovies,
@@ -47,6 +48,7 @@ const Home = () => {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
   const { isGuestMode } = useGuestMode();
+  const { backdropUrl } = useBillboardBackdrop();
   const { data: movies = [], isLoading: isMoviesLoading } = useMovieList();
   const { data: trending = [], isLoading: isTrendingLoading } = useTrending();
   const { data: favorites = [], isLoading: isFavoritesLoading } = useFavorites();
@@ -93,106 +95,123 @@ const Home = () => {
   }, [mutateContinueWatching, isGuestMode]);
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
-      {isLoading ? (
-        <LoadingAnimation />
-      ) : (
-        <>
-          {isOpen && <InfoModal visible={isOpen} onClose={closeModal} />}
-          <Navbar />
-          <Billboard />
-          <div className="pb-40">
-            {/* Browse by Provider Section */}
-            <BrowseByProvider />
+    <div className="min-h-screen overflow-x-hidden relative">
+      {/* Dynamic Blurred Background */}
+      <div
+        className="fixed inset-0 w-full h-full transition-all duration-1000 ease-in-out"
+        style={{
+          backgroundImage: backdropUrl ? `url(${backdropUrl})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Heavy blur and dark overlay */}
+        <div className="absolute inset-0 backdrop-blur-3xl bg-black/70" />
+      </div>
 
-            {/* Continue Watching Section */}
-            {activeContinueWatching && activeContinueWatching.length > 0 && (
-              <ContinueWatchingList data={activeContinueWatching} />
-            )}
+      {/* Content - positioned above background */}
+      <div className="relative z-10">
+        {isLoading ? (
+          <LoadingAnimation />
+        ) : (
+          <>
+            {isOpen && <InfoModal visible={isOpen} onClose={closeModal} />}
+            <Navbar />
+            <Billboard />
+            <div className="pb-40">
+              {/* Continue Watching Section */}
+              {activeContinueWatching && activeContinueWatching.length > 0 && (
+                <ContinueWatchingList data={activeContinueWatching} />
+              )}
 
-            {/* Trending Movies */}
-            {trendingMovies.length > 0 && (
-              <MovieList title="Trending Movies" data={trendingMovies} />
-            )}
+              {/* My List - Right after Continue Watching */}
+              {!isGuestMode && favorites.length > 0 && (
+                <MovieList title="My List" data={favorites} />
+              )}
 
-            {/* Trending Series */}
-            {trendingSeries.length > 0 && (
-              <MovieList title="Trending Series" data={trendingSeries} />
-            )}
+              {/* Browse by Provider Section */}
+              <BrowseByProvider />
 
-            {/* Movies on Netflix */}
-            {netflixMovies.length > 0 && (
-              <MovieList title="Movies on Netflix" data={netflixMovies} />
-            )}
+              {/* Trending Movies */}
+              {trendingMovies.length > 0 && (
+                <MovieList title="Trending Movies" data={trendingMovies} />
+              )}
 
-            {/* TV Series on Netflix */}
-            {netflixSeries.length > 0 && (
-              <MovieList title="TV Series on Netflix" data={netflixSeries} />
-            )}
+              {/* Trending Series */}
+              {trendingSeries.length > 0 && (
+                <MovieList title="Trending Series" data={trendingSeries} />
+              )}
 
-            {/* Award Winning Movies */}
-            {awardWinningMovies.length > 0 && (
-              <MovieList title="Award Winning Movies" data={awardWinningMovies} />
-            )}
+              {/* Movies on Netflix */}
+              {netflixMovies.length > 0 && (
+                <MovieList title="Movies on Netflix" data={netflixMovies} />
+              )}
 
-            {/* Award Winning Shows */}
-            {awardWinningShows.length > 0 && (
-              <MovieList title="Award Winning Shows" data={awardWinningShows} />
-            )}
+              {/* TV Series on Netflix */}
+              {netflixSeries.length > 0 && (
+                <MovieList title="TV Series on Netflix" data={netflixSeries} />
+              )}
 
-            {/* Top Rated Movies */}
-            {topRatedMovies.length > 0 && (
-              <MovieList title="Top Rated Movies" data={topRatedMovies} />
-            )}
+              {/* Award Winning Movies */}
+              {awardWinningMovies.length > 0 && (
+                <MovieList title="Award Winning Movies" data={awardWinningMovies} />
+              )}
 
-            {/* Top Rated Series */}
-            {topRatedSeries.length > 0 && (
-              <MovieList title="Top Rated Series" data={topRatedSeries} />
-            )}
+              {/* Award Winning Shows */}
+              {awardWinningShows.length > 0 && (
+                <MovieList title="Award Winning Shows" data={awardWinningShows} />
+              )}
 
-            {/* Oscar Nominees for Best Picture */}
-            {oscarNominees.length > 0 && (
-              <MovieList title="Oscar Nominees for Best Picture" data={oscarNominees} />
-            )}
+              {/* Top Rated Movies */}
+              {topRatedMovies.length > 0 && (
+                <MovieList title="Top Rated Movies" data={topRatedMovies} />
+              )}
 
-            {/* Psychological Thrillers */}
-            {psychologicalThrillers.length > 0 && (
-              <MovieList title="Psychological Thrillers" data={psychologicalThrillers} />
-            )}
+              {/* Top Rated Series */}
+              {topRatedSeries.length > 0 && (
+                <MovieList title="Top Rated Series" data={topRatedSeries} />
+              )}
 
-            {/* Cannes Film Festival */}
-            {cannesFestival.length > 0 && (
-              <MovieList title="Cannes Film Festival" data={cannesFestival} />
-            )}
+              {/* Oscar Nominees for Best Picture */}
+              {oscarNominees.length > 0 && (
+                <MovieList title="Oscar Nominees for Best Picture" data={oscarNominees} />
+              )}
 
-            {/* Top 100 Halloween Movies */}
-            {halloweenMovies.length > 0 && (
-              <MovieList title="Top 100 Halloween Movies" data={halloweenMovies} />
-            )}
+              {/* Psychological Thrillers */}
+              {psychologicalThrillers.length > 0 && (
+                <MovieList title="Psychological Thrillers" data={psychologicalThrillers} />
+              )}
 
-            {/* Rotten Tomatoes: Best Movies of All Time */}
-            {rottenTomatoesBest.length > 0 && (
-              <MovieList title="Rotten Tomatoes: Best Movies of All Time" data={rottenTomatoesBest} />
-            )}
+              {/* Cannes Film Festival */}
+              {cannesFestival.length > 0 && (
+                <MovieList title="Cannes Film Festival" data={cannesFestival} />
+              )}
 
-            {/* Mindf*ck Movies */}
-            {mindfuckMovies.length > 0 && (
-              <MovieList title="Mindf*ck Movies" data={mindfuckMovies} />
-            )}
+              {/* Top 100 Halloween Movies */}
+              {halloweenMovies.length > 0 && (
+                <MovieList title="Top 100 Halloween Movies" data={halloweenMovies} />
+              )}
 
-            {/* Based on a True Story */}
-            {basedOnTrueStory.length > 0 && (
-              <MovieList title="Based on a True Story" data={basedOnTrueStory} />
-            )}
+              {/* Rotten Tomatoes: Best Movies of All Time */}
+              {rottenTomatoesBest.length > 0 && (
+                <MovieList title="Rotten Tomatoes: Best Movies of All Time" data={rottenTomatoesBest} />
+              )}
 
-            {/* My List - Hidden in guest mode */}
-            {!isGuestMode && favorites.length > 0 && (
-              <MovieList title="My List" data={favorites} />
-            )}
-          </div>
-          <Footer />
-        </>
-      )}
+              {/* Mindf*ck Movies */}
+              {mindfuckMovies.length > 0 && (
+                <MovieList title="Mindf*ck Movies" data={mindfuckMovies} />
+              )}
+
+              {/* Based on a True Story */}
+              {basedOnTrueStory.length > 0 && (
+                <MovieList title="Based on a True Story" data={basedOnTrueStory} />
+              )}
+            </div>
+            <Footer />
+          </>
+        )}
+      </div>
     </div>
   )
 }

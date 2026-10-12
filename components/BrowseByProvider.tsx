@@ -127,7 +127,7 @@ const BrowseByProvider: React.FC = () => {
     const remainingCount = providers.length - 7;
 
     return (
-        <section className="py-16 bg-gradient-to-b from-black via-gray-900 to-black">
+        <section className="py-16 bg-transparent">
             <div className="container mx-auto px-4 sm:px-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

@@ -5,11 +5,13 @@ import PlayButton from '@/components/PlayButton';
 import WatchlistButton from '@/components/WatchlistButton';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import useTrending from '@/hooks/useTrending';
+import useBillboardBackdrop from '@/hooks/useBillboardBackdrop';
 import axios from 'axios';
 
 const Billboard = React.memo(() => {
   const { openModal } = useInfoModalStore();
   const { data: trendingMovies = [], isLoading: isTrendingLoading } = useTrending();
+  const { setBackdropUrl } = useBillboardBackdrop();
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [trailerFetchedId, setTrailerFetchedId] = useState<string | null>(null);
@@ -105,6 +107,13 @@ const Billboard = React.memo(() => {
 
   // Get current main movie
   const mainMovie = movieQueue.length > 0 ? movieQueue[currentIndex] : null;
+
+  // Update global backdrop URL whenever main movie changes
+  useEffect(() => {
+    if (mainMovie?.backdropUrl || mainMovie?.thumbnailUrl) {
+      setBackdropUrl(mainMovie.backdropUrl || mainMovie.thumbnailUrl);
+    }
+  }, [mainMovie?.backdropUrl, mainMovie?.thumbnailUrl, setBackdropUrl]);
 
   // Get next 3 movies in the queue (circular)
   const getUpNextMovies = useCallback(() => {
