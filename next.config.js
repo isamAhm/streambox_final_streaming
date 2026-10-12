@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   
+  // Disable automatic scroll restoration (we'll handle it manually)
+  experimental: {
+    scrollRestoration: true,
+  },
+  
   // Performance optimizations
   swcMinify: true,
   compress: true,

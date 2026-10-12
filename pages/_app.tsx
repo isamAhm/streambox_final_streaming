@@ -18,6 +18,12 @@ const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/sso-callback', ['/profiles']],
 ]);
 
+// Store scroll positions for different routes
+const scrollPositions: { [key: string]: number } = {};
+
+// Main navigation routes that should always scroll to top
+const mainNavRoutes = new Set(['/home', '/series', '/movies', '/myList', '/anime/index', '/cinema-room']);
+
 export default function App({
   Component,
   pageProps
@@ -25,6 +31,50 @@ export default function App({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles', '/sso-callback']));
+
+  // Enable developer tools protection in production
+  useDevToolsProtection();
+
+  // Handle scroll restoration
+  useEffect(() => {
+    const handleRouteChangeStart = (url: string) => {
+      // Save current scroll position
+      scrollPositions[router.asPath] = window.scrollY;
+    };
+
+    const handleRouteChangeComplete = (url: string) => {
+      // Get the clean path without query params
+      const cleanPath = url.split('?')[0];
+
+      // Check if this is a main navigation route - always scroll to top
+      if (mainNavRoutes.has(cleanPath)) {
+        window.scrollTo(0, 0);
+        // Clear saved position for this route
+        delete scrollPositions[url];
+      }
+      // For other routes, restore scroll position if it exists
+      else if (scrollPositions[url] !== undefined) {
+        setTimeout(() => {
+          window.scrollTo({
+            top: scrollPositions[url],
+            behavior: 'instant' as ScrollBehavior,
+          });
+        }, 0);
+      }
+      // Default: scroll to top for new pages
+      else {
+        window.scrollTo(0, 0);
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
+    };
+  }, [router.asPath, router.events]);
 
   // Enable developer tools protection in production
   useDevToolsProtection();
@@ -99,7 +149,7 @@ export default function App({
     return () => clearTimeout(timer);
   }, [router.isReady, router.pathname, exactPaths]);
 
-  // Handle client-side navigation
+  // Handle client-side navigation loading states
   useEffect(() => {
     const handleRouteChange = (url: string) => {
       const currentPath = router.asPath.split('?')[0];
