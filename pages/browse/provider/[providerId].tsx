@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Play, Info } from 'lucide-react';
 import MovieCard from '@/components/MovieCard';
 import Navbar from '@/components/Navbar';
-import { MovieInterface } from '@/types';
+import { Movie } from '@/types';
 
 interface ProviderPageProps {
     providerId: string;
@@ -33,7 +33,7 @@ const providerData: { [key: string]: { name: string; color: string; icon: string
 
 const ProviderPage: React.FC<ProviderPageProps> = ({ providerId, providerName }) => {
     const router = useRouter();
-    const [movies, setMovies] = useState<MovieInterface[]>([]);
+    const [movies, setMovies] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
