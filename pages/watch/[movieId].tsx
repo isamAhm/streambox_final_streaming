@@ -68,11 +68,13 @@ const Watch = () => {
 
   // Build streaming sources
   useEffect(() => {
-    if (!data?.imdbId) return;
+    // Need either IMDB ID or TMDB ID to build sources
+    if (!data?.imdbId && !data?.tmdbId) return;
+
     try {
       const streamSources = isTV
-        ? streamingService.getTVShowStreamSources(data.imdbId, currentSeason, currentEp, data.tmdbId)
-        : streamingService.getMovieStreamSources(data.imdbId, data.tmdbId);
+        ? streamingService.getTVShowStreamSources(data.imdbId || '', currentSeason, currentEp, data.tmdbId)
+        : streamingService.getMovieStreamSources(data.imdbId || '', data.tmdbId);
       setSources(streamSources);
       setCurrentSourceIndex(0);
     } catch { setSources([]); }

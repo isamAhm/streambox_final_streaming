@@ -19,6 +19,23 @@ import useTopRated from '@/hooks/useTopRated';
 import useInfoModalStore from '@/hooks/useInfoModalStore';
 import useTrending from '@/hooks/useTrending';
 import { LoadingAnimation } from '@/components/loading-animation';
+import {
+  useTrendingMovies,
+  useTrendingSeries,
+  useNetflixMovies,
+  useNetflixSeries,
+  useAwardWinningMovies,
+  useAwardWinningShows,
+  useTopRatedMovies,
+  useTopRatedSeries,
+  useOscarNominees,
+  usePsychologicalThrillers,
+  useCannesFestival,
+  useHalloweenMovies,
+  useRottenTomatoesBest,
+  useMindfuckMovies,
+  useBasedOnTrueStory,
+} from '@/hooks/useContentCategories';
 
 // Lazy load InfoModal since it's not always needed
 const InfoModal = dynamic(() => import('@/components/InfoModal'), {
@@ -38,6 +55,23 @@ const Home = () => {
   const { data: series = [], isLoading: isSeriesLoading } = useSeries();
   const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRated();
   const { isOpen, closeModal } = useInfoModalStore();
+
+  // New content categories from TMDB
+  const { data: trendingMovies = [] } = useTrendingMovies();
+  const { data: trendingSeries = [] } = useTrendingSeries();
+  const { data: netflixMovies = [] } = useNetflixMovies();
+  const { data: netflixSeries = [] } = useNetflixSeries();
+  const { data: awardWinningMovies = [] } = useAwardWinningMovies();
+  const { data: awardWinningShows = [] } = useAwardWinningShows();
+  const { data: topRatedMovies = [] } = useTopRatedMovies();
+  const { data: topRatedSeries = [] } = useTopRatedSeries();
+  const { data: oscarNominees = [] } = useOscarNominees();
+  const { data: psychologicalThrillers = [] } = usePsychologicalThrillers();
+  const { data: cannesFestival = [] } = useCannesFestival();
+  const { data: halloweenMovies = [] } = useHalloweenMovies();
+  const { data: rottenTomatoesBest = [] } = useRottenTomatoesBest();
+  const { data: mindfuckMovies = [] } = useMindfuckMovies();
+  const { data: basedOnTrueStory = [] } = useBasedOnTrueStory();
 
   const isLoading = isMoviesLoading || isTrendingLoading || isFavoritesLoading || isSeriesLoading || isTopRatedLoading;
 
@@ -76,22 +110,84 @@ const Home = () => {
               <ContinueWatchingList data={activeContinueWatching} />
             )}
 
-            {/* Trending Now — from TMDB trending this week */}
-            <MovieList title="Trending Now" data={trending.length > 0 ? trending : movies} />
+            {/* Trending Movies */}
+            {trendingMovies.length > 0 && (
+              <MovieList title="Trending Movies" data={trendingMovies} />
+            )}
+
+            {/* Trending Series */}
+            {trendingSeries.length > 0 && (
+              <MovieList title="Trending Series" data={trendingSeries} />
+            )}
+
+            {/* Movies on Netflix */}
+            {netflixMovies.length > 0 && (
+              <MovieList title="Movies on Netflix" data={netflixMovies} />
+            )}
+
+            {/* TV Series on Netflix */}
+            {netflixSeries.length > 0 && (
+              <MovieList title="TV Series on Netflix" data={netflixSeries} />
+            )}
+
+            {/* Award Winning Movies */}
+            {awardWinningMovies.length > 0 && (
+              <MovieList title="Award Winning Movies" data={awardWinningMovies} />
+            )}
+
+            {/* Award Winning Shows */}
+            {awardWinningShows.length > 0 && (
+              <MovieList title="Award Winning Shows" data={awardWinningShows} />
+            )}
+
+            {/* Top Rated Movies */}
+            {topRatedMovies.length > 0 && (
+              <MovieList title="Top Rated Movies" data={topRatedMovies} />
+            )}
+
+            {/* Top Rated Series */}
+            {topRatedSeries.length > 0 && (
+              <MovieList title="Top Rated Series" data={topRatedSeries} />
+            )}
+
+            {/* Oscar Nominees for Best Picture */}
+            {oscarNominees.length > 0 && (
+              <MovieList title="Oscar Nominees for Best Picture" data={oscarNominees} />
+            )}
+
+            {/* Psychological Thrillers */}
+            {psychologicalThrillers.length > 0 && (
+              <MovieList title="Psychological Thrillers" data={psychologicalThrillers} />
+            )}
+
+            {/* Cannes Film Festival */}
+            {cannesFestival.length > 0 && (
+              <MovieList title="Cannes Film Festival" data={cannesFestival} />
+            )}
+
+            {/* Top 100 Halloween Movies */}
+            {halloweenMovies.length > 0 && (
+              <MovieList title="Top 100 Halloween Movies" data={halloweenMovies} />
+            )}
+
+            {/* Rotten Tomatoes: Best Movies of All Time */}
+            {rottenTomatoesBest.length > 0 && (
+              <MovieList title="Rotten Tomatoes: Best Movies of All Time" data={rottenTomatoesBest} />
+            )}
+
+            {/* Mindf*ck Movies */}
+            {mindfuckMovies.length > 0 && (
+              <MovieList title="Mindf*ck Movies" data={mindfuckMovies} />
+            )}
+
+            {/* Based on a True Story */}
+            {basedOnTrueStory.length > 0 && (
+              <MovieList title="Based on a True Story" data={basedOnTrueStory} />
+            )}
 
             {/* My List - Hidden in guest mode */}
             {!isGuestMode && favorites.length > 0 && (
               <MovieList title="My List" data={favorites} />
-            )}
-
-            {/* Series */}
-            {series.length > 0 && (
-              <MovieList title="Series" data={series} />
-            )}
-
-            {/* Top Rated */}
-            {topRated.length > 0 && (
-              <MovieList title="Top Rated" data={topRated} />
             )}
           </div>
           <Footer />
