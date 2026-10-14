@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
                                 </svg>
                             </div>
                             <span className="text-white font-semibold text-base tracking-tight">
-                                StreamBox
+                                Stream<span className="text-blue-700">Box</span>
                             </span>
                         </Link>
 

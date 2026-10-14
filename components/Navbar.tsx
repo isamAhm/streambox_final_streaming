@@ -183,7 +183,7 @@ const Navbar = () => {
       <div className={`px-4 md:px-16 py-6 flex flex-row items-center transition duration-500 ${showBackground ? 'bg-black bg-opacity-90' : ''}`}>
         <div className="flex justify-center content-center cursor-pointer items-center">
           <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
-          <p className="text-white pl-2 font-semibold justify-center content-center items-center">StreamBox</p>
+          <p className="text-white pl-2 font-semibold justify-center content-center items-center">Stream<span className="text-blue-700">Box</span></p>
         </div>
 
         <div className="flex-row ml-8 gap-7 hidden lg:flex">
