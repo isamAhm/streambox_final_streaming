@@ -233,6 +233,24 @@ Updates in real-time based on current schedule.
 
 ## Notes
 
+### Live Sports Troubleshooting
+**Issue**: If you see "no events" or errors on the Live Sports page, this is normal behavior.
+
+**Why it happens**:
+- The cdnlivetv.is sports API returns **real-time** event data
+- Events only appear when games are actually scheduled/live
+- Empty results mean no games are currently scheduled
+- API may experience downtime or rate limiting
+
+**Recent improvements** (Latest Fix):
+- ✅ Added comprehensive error handling with retry functionality
+- ✅ Better user feedback for empty states vs. errors
+- ✅ Console logging for debugging API responses
+- ✅ Clear distinction between:
+  - Network/API errors (shows error with retry button)
+  - No scheduled events (shows informative message)
+  - Loading states (shows loading indicator)
+
 ### API Limitations
 - Free tier: `user=cdnlivetv&plan=free`
 - No authentication required
