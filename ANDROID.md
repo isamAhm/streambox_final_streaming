@@ -2,6 +2,8 @@
 
 This document explains how to build, test, and deploy the Streambox Android APK using Capacitor.
 
+> **🚨 FIRST TIME SETUP:** If you haven't built an Android app before, start with **[ANDROID_BUILD_SETUP.md](./ANDROID_BUILD_SETUP.md)** for detailed Android SDK installation instructions.
+
 ## 📋 Prerequisites
 
 ### Required Software
