@@ -24,18 +24,17 @@ interface UserCardProps {
 export async function getServerSideProps(context: NextPageContext) {
   const { userId } = getAuth(context.req as any);
 
+  // Allow guests to access profiles page
   if (!userId) {
+    // Check if guest mode is enabled (we'll handle this on client side)
     return {
-      redirect: {
-        destination: '/auth',
-        permanent: false,
-      }
-    }
+      props: {}
+    };
   }
 
   return {
     props: {}
-  }
+  };
 }
 
 const UserCard: React.FC<UserCardProps> = ({ name, image, isGuest = false, onClick }) => {

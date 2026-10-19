@@ -38,3 +38,15 @@ next-env.d.ts
 
 # Scripts
 scripts/
+
+
+# Android / Capacitor
+android/local.properties
+android/app/build/
+android/build/
+android/.gradle/
+android/.idea/
+*.keystore
+*.jks
+keystore.properties
+www/

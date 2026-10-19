@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(405).end();
         }
 
-        await serverAuth(req);
+        // Guest mode: No authentication required for browsing series by genre
 
         const { genre } = req.query;
 

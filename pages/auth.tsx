@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useGuestMode } from '@/contexts/GuestModeContext';
 
 import Input from '@/components/Input';
 import Head from 'next/head';
@@ -16,6 +17,7 @@ export async function getServerSideProps() {
 const Auth = () => {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { setGuestMode } = useGuestMode();
 
   // Client-side redirect if already signed in
   useEffect(() => {
@@ -246,6 +248,12 @@ const Auth = () => {
     }
   }, [signIn, isSignInLoaded]);
 
+  const continueAsGuest = useCallback(() => {
+    setGuestMode(true);
+    toast.success('Welcome! Browsing as guest');
+    router.push('/');
+  }, [setGuestMode, router]);
+
   return (
     <div className="relative h-full bg-black w-full max-md:bg-[url('/images/mobile_view1.png')] bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
       <Head>
@@ -377,7 +385,28 @@ const Auth = () => {
               <button onClick={variant === 'login' ? login : register} className="bg-blue-900 py-3 text-white rounded-md w-full mt-10 hover:bg-blue-900/85 transition">
                 {variant === 'login' ? 'Login' : 'Sign up'}
               </button>
+
+              {/* Try as Guest Button */}
+              <button
+                onClick={continueAsGuest}
+                className="bg-transparent border-2 border-zinc-600 py-3 text-white rounded-md w-full mt-3 hover:bg-zinc-800 hover:border-zinc-500 transition flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Try StreamBox as Guest
+              </button>
+              <p className="text-neutral-500 text-xs text-center mt-2">
+                Browse and watch content • Limited features
+              </p>
+
               <div className="flex flex-row items-center gap-4 mt-8 justify-center">
+                <div className="h-px bg-neutral-700 w-full"></div>
+                <span className="text-neutral-500 text-sm">or continue with</span>
+                <div className="h-px bg-neutral-700 w-full"></div>
+              </div>
+
+              <div className="flex flex-row items-center gap-4 mt-4 justify-center">
                 <div onClick={signInWithGoogle} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
                   <FcGoogle size={32} />
                 </div>

@@ -14,9 +14,18 @@
     "populate:large": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/populate-database.ts large",
     "create-indexes": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/create-text-indexes.ts",
     "verify-deploy": "node verify-deployment-ready.js",
-    "prepare-deploy": "npx prisma generate && npx prisma db push && npm run build"
+    "prepare-deploy": "npx prisma generate && npx prisma db push && npm run build",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "android:debug": "cd android && ./gradlew assembleDebug && cd ..",
+    "android:release": "cd android && ./gradlew bundleRelease && cd .."
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@chakra-ui/react": "^2.5.1",
     "@clerk/nextjs": "^4.29.7",
     "@consumet/extensions": "^1.8.8",

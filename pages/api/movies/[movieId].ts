@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prismadb from '@/libs/prismadb';
-import serverAuth from "@/libs/serverAuth";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -8,8 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).end();
     }
 
-    await serverAuth(req);
-
+    // Allow guest access - no authentication required
     const { movieId } = req.query;
 
     if (typeof movieId !== 'string') {

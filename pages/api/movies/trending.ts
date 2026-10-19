@@ -32,7 +32,7 @@ async function getImdbId(tmdbId: number, type: 'movie' | 'tv'): Promise<string |
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') return res.status(405).end();
 
-    try { await serverAuth(req); } catch { return res.status(401).end(); }
+    // Guest mode: No authentication required for browsing trending content
 
     if (!TMDB_KEY) {
         // Fallback: just return DB by popularity

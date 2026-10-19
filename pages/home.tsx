@@ -4,13 +4,24 @@ import BrowseByProvider from '@/components/BrowseByProvider'
 import { motion } from 'framer-motion'
 import Head from 'next/head'
 import router from 'next/router'
-import React, { useState } from 'react'
-import { Search, X, Menu, ArrowRight, Facebook, Instagram, Mail, Twitter, Youtube, Play } from 'lucide-react'
+import React, { useState, useCallback } from 'react'
+import { Search, X, Menu, ArrowRight, Facebook, Instagram, Mail, Twitter, Youtube, Play, UserCircle } from 'lucide-react'
 import { Button } from '@/components/button'
+import { useGuestMode } from '@/contexts/GuestModeContext'
+import toast from 'react-hot-toast'
 
 function home() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { setGuestMode } = useGuestMode();
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const handleGuestMode = useCallback(() => {
+    setGuestMode(true);
+    toast.success('Welcome! Browsing as guest');
+    router.push('/');
+  }, [setGuestMode]);
 
   return (
     <section className="h-screen relative overflow-auto wave bg-black text-white scrollbar-transparent">
@@ -35,7 +46,7 @@ function home() {
                 }}
                 className="flex justify-center content-center cursor-pointer items-center">
                 <img src="/images/favicon1.png" className="h-10 w-10" alt="logo" />
-                <p className="pl-2 font-semibold justify-center content-center items-center">StreamBox</p>
+                <p className="pl-2 font-semibold justify-center content-center items-center">Stream<span className="text-blue-700">Box</span></p>
               </div>
 
               <nav className="hidden md:flex ml-10 space-x-8">
@@ -143,6 +154,17 @@ function home() {
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <Button
+                  onClick={handleGuestMode}
+                  variant="outline"
+                  className="border-white/20 bg-white/5 hover:bg-white/10 text-white px-8 py-6 text-lg rounded-full glass flex items-center gap-2"
+                >
+                  <UserCircle className="h-5 w-5" />
+                  Try as Guest
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                <Button
                   variant="outline"
                   onClick={() => {
                     const pricingSection = document.getElementById('pricing');
@@ -150,9 +172,9 @@ function home() {
                       pricingSection.scrollIntoView({ behavior: 'smooth' });
                     }
                   }}
-                  className="border-white/20 bg-white/5 hover:bg-white/10 text-white px-8 py-6 text-lg rounded-full glass"
+                  className="border-white/30 bg-transparent hover:bg-white/5 text-white px-8 py-6 text-lg rounded-full"
                 >
-                  Explore Plans
+                  View Plans
                 </Button>
               </motion.div>
             </motion.div>

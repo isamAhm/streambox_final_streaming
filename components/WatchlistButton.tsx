@@ -4,6 +4,9 @@ import WatchlistModal from './WatchlistModal';
 import useWatchlist from '@/hooks/useWatchlist';
 import useFavorites from '@/hooks/useFavorites';
 import useCurrentUser from '@/hooks/useCurrentUser';
+import { useAuth } from '@clerk/nextjs';
+import { useGuestMode } from '@/contexts/GuestModeContext';
+import GuestPrompt from './GuestPrompt';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -14,6 +17,9 @@ interface WatchlistButtonProps {
 
 const WatchlistButton: React.FC<WatchlistButtonProps> = ({ movieId, movieTitle }) => {
     const [showModal, setShowModal] = useState(false);
+    const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+    const { isSignedIn } = useAuth();
+    const { isGuestMode } = useGuestMode();
     const { data: watchlistItems = [], mutate: mutateWatchlist } = useWatchlist();
     const { data: watchingItems = [], mutate: mutateWatching } = useWatchlist('watching');
     const { data: completedItems = [], mutate: mutateCompleted } = useWatchlist('completed');
@@ -33,9 +39,16 @@ const WatchlistButton: React.FC<WatchlistButtonProps> = ({ movieId, movieTitle }
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        // Always show modal
+
+        // Check if user is guest or not signed in
+        if (!isSignedIn || isGuestMode) {
+            setShowGuestPrompt(true);
+            return;
+        }
+
+        // Show modal for authenticated users
         setShowModal(true);
-    }, []);
+    }, [isSignedIn, isGuestMode]);
 
     const handleRemove = async () => {
         try {
@@ -84,6 +97,14 @@ const WatchlistButton: React.FC<WatchlistButtonProps> = ({ movieId, movieTitle }
             >
                 <Icon className="text-white group-hover/item:text-neutral-300 w-4 lg:w-6" />
             </div>
+
+            {showGuestPrompt && (
+                <GuestPrompt
+                    feature="Watchlist"
+                    message="Sign up to save movies and shows to your watchlist"
+                    onClose={() => setShowGuestPrompt(false)}
+                />
+            )}
 
             <WatchlistModal
                 visible={showModal}

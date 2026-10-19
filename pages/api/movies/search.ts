@@ -165,7 +165,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(405).json({ error: 'Method not allowed' });
         }
 
-        await serverAuth(req);
+        // Guest mode: No authentication required for search
 
         const { query, type = 'all', page = '1', limit = '20' } = req.query;
 

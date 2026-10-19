@@ -8,11 +8,7 @@ const TMDB_IMG = 'https://image.tmdb.org/t/p';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end();
 
-  try {
-    await serverAuth(req);
-  } catch {
-    return res.status(401).end();
-  }
+  // Guest mode: No authentication required for random billboard content
 
   try {
     // 1. Fetch TMDB trending today (movies + TV combined)

@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(405).end();
         }
 
-        await serverAuth(req);
+        // Guest mode: No authentication required for browsing movies
 
         const movies = await prismadb.movie.findMany({
             where: {

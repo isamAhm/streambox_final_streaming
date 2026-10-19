@@ -80,12 +80,13 @@ const Home = () => {
   // Combine regular and guest continue watching data
   const activeContinueWatching = isGuestMode ? guestContinueWatching : continueWatching;
 
-  // Redirect unauthenticated users to landing page
+  // Redirect unauthenticated users (who are not in guest mode) to landing page
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isLoaded && !isSignedIn && !isGuestMode) {
+      // User is not signed in and not in guest mode -> show landing page
       router.replace('/home');
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, isGuestMode, router]);
 
   // Revalidate continue watching when component mounts (user returns from watch page)
   useEffect(() => {
@@ -93,6 +94,12 @@ const Home = () => {
       mutateContinueWatching();
     }
   }, [mutateContinueWatching, isGuestMode]);
+
+  // Don't render the main app for non-authenticated, non-guest users
+  // They should see the landing page instead
+  if (isLoaded && !isSignedIn && !isGuestMode) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden relative">

@@ -10,9 +10,9 @@ import { tmdbService } from '@/libs/tmdb';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') return res.status(405).end();
 
-    try {
-        await serverAuth(req);
+    // Guest mode: No authentication required for viewing movie details
 
+    try {
         const { movieId } = req.query as { movieId: string };
 
         // Guard against non-ObjectId strings
