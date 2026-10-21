@@ -11,6 +11,7 @@ import { LoadingAnimation } from '@/components/loading-animation';
 import ClerkErrorBoundary from '@/components/ClerkErrorBoundary';
 import { GuestModeProvider } from '@/contexts/GuestModeContext';
 import useDevToolsProtection from '@/hooks/useDevToolsProtection';
+import { useIsMobileApp } from '@/hooks/useIsMobileApp';
 
 const ALLOWED_TRANSITIONS = new Map<string, string[]>([
   ['/home', ['/auth']],
@@ -31,6 +32,7 @@ export default function App({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [exactPaths] = useState(new Set(['/home', '/auth', '/profiles', '/sso-callback']));
+  const isMobileApp = useIsMobileApp();
 
   // Enable developer tools protection in production
   useDevToolsProtection();
@@ -181,6 +183,48 @@ export default function App({
         <GuestModeProvider>
           <Head>
             <title>StreamBox</title>
+            {isMobileApp && (
+              <style>{`
+                /* Hide ads and popups in mobile app */
+                iframe[src*="ads"],
+                iframe[src*="doubleclick"],
+                iframe[src*="googlesyndication"],
+                div[class*="ad-container"],
+                div[class*="advertisement"],
+                div[id*="ad-"],
+                div[id*="ads-"],
+                .ad,
+                .ads,
+                .advertisement,
+                [class*="AdContainer"],
+                [class*="adsbygoogle"] {
+                  display: none !important;
+                  visibility: hidden !important;
+                  opacity: 0 !important;
+                  pointer-events: none !important;
+                  position: absolute !important;
+                  left: -9999px !important;
+                }
+                
+                /* Hide video ads and overlays */
+                video ~ div[style*="absolute"],
+                video ~ div[style*="fixed"] {
+                  z-index: 1 !important;
+                }
+                
+                /* Ensure close buttons are visible */
+                button[aria-label*="close" i],
+                button[class*="close" i],
+                .close-button,
+                [role="button"][aria-label*="close" i] {
+                  display: block !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
+                  z-index: 999999 !important;
+                  pointer-events: auto !important;
+                }
+              `}</style>
+            )}
           </Head>
 
           <Toaster
