@@ -5,14 +5,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
 import android.widget.FrameLayout;
+import android.util.Log;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     
+    private static final String TAG = "Streambox";
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private FrameLayout fullscreenContainer;
+    
+    // List of blocked ad domains
+    private static final String[] BLOCKED_DOMAINS = {
+        "1xbet",
+        "meltbet",
+        "betway",
+        "ads",
+        "adserver",
+        "doubleclick",
+        "googlesyndication",
+        "advertising",
+        "casino",
+        "betting",
+        "tracker",
+        "analytics.google",
+        "facebook.com/tr"
+    };
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,6 +62,40 @@ public class MainActivity extends BridgeActivity {
             
             // Enable hardware acceleration
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            
+            // Add WebViewClient to block ad redirects
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    String url = request.getUrl().toString();
+                    String host = request.getUrl().getHost();
+                    
+                    // Check if URL contains blocked domains
+                    for (String blockedDomain : BLOCKED_DOMAINS) {
+                        if (url.toLowerCase().contains(blockedDomain.toLowerCase())) {
+                            Log.d(TAG, "Blocked ad navigation: " + url);
+                            // Prevent navigation to ad
+                            return true;
+                        }
+                    }
+                    
+                    // Allow navigation to your domain
+                    if (host != null && host.contains("streamboxx.duckdns.org")) {
+                        return false; // Allow
+                    }
+                    
+                    // Block external navigations (open in browser instead)
+                    if (host != null && !host.contains("streamboxx.duckdns.org")) {
+                        Log.d(TAG, "Blocked external navigation: " + url);
+                        // Could open in external browser if needed:
+                        // Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+                        // startActivity(intent);
+                        return true; // Block
+                    }
+                    
+                    return false;
+                }
+            });
             
             // Custom WebChromeClient for fullscreen video
             webView.setWebChromeClient(new WebChromeClient() {

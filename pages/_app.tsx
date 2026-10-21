@@ -189,6 +189,9 @@ export default function App({
                 iframe[src*="ads"],
                 iframe[src*="doubleclick"],
                 iframe[src*="googlesyndication"],
+                iframe[src*="1xbet"],
+                iframe[src*="meltbet"],
+                iframe[src*="betway"],
                 div[class*="ad-container"],
                 div[class*="advertisement"],
                 div[id*="ad-"],
@@ -197,31 +200,48 @@ export default function App({
                 .ads,
                 .advertisement,
                 [class*="AdContainer"],
-                [class*="adsbygoogle"] {
+                [class*="adsbygoogle"],
+                a[href*="1xbet"],
+                a[href*="meltbet"],
+                a[href*="betway"] {
                   display: none !important;
                   visibility: hidden !important;
                   opacity: 0 !important;
                   pointer-events: none !important;
                   position: absolute !important;
                   left: -9999px !important;
+                  width: 0 !important;
+                  height: 0 !important;
                 }
                 
-                /* Hide video ads and overlays */
-                video ~ div[style*="absolute"],
-                video ~ div[style*="fixed"] {
+                /* Block video ad overlays and click-through layers */
+                video ~ div[onclick],
+                video ~ a[target="_blank"],
+                div[style*="position: absolute"][style*="z-index"],
+                div[style*="position: fixed"][style*="z-index"]:not(.video-controls) {
+                  pointer-events: none !important;
+                }
+                
+                /* Prevent click hijacking on video player */
+                video {
+                  pointer-events: auto !important;
                   z-index: 1 !important;
                 }
                 
-                /* Ensure close buttons are visible */
-                button[aria-label*="close" i],
-                button[class*="close" i],
-                .close-button,
-                [role="button"][aria-label*="close" i] {
-                  display: block !important;
-                  visibility: visible !important;
-                  opacity: 1 !important;
-                  z-index: 999999 !important;
+                /* Hide betting/casino ad overlays */
+                div[class*="overlay"]:has(a[href*="bet"]),
+                div[class*="popup"]:has(a[href*="casino"]) {
+                  display: none !important;
+                }
+                
+                /* Ensure video player is clickable */
+                .video-player,
+                video,
+                .plyr,
+                .vjs-tech {
                   pointer-events: auto !important;
+                  position: relative !important;
+                  z-index: 10 !important;
                 }
               `}</style>
             )}
