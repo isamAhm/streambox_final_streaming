@@ -107,7 +107,7 @@ public class MainActivity extends BridgeActivity {
     }
     
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         if (customView != null && customViewCallback != null) {
             customViewCallback.onCustomViewHidden();
         }
