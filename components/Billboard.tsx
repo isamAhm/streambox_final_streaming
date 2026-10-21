@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { InformationCircleIcon, PlayIcon, FilmIcon } from '@heroicons/react/24/outline';
+import { InformationCircleIcon, PlayIcon, FilmIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import PlayButton from '@/components/PlayButton';
 import WatchlistButton from '@/components/WatchlistButton';
@@ -20,6 +20,7 @@ const Billboard = React.memo(() => {
   const [trailersEnabled, setTrailersEnabled] = useState(false);
   const [autoRotateInterval, setAutoRotateInterval] = useState<NodeJS.Timeout | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   const handleOpenModal = useCallback(() => {
     if (movieQueue.length > 0) {
@@ -74,6 +75,7 @@ const Billboard = React.memo(() => {
   useEffect(() => {
     if (movieQueue.length > 0) {
       setIsTransitioning(true);
+      setDescriptionExpanded(false); // Reset description when movie changes
 
       // End transition after animation completes
       const timer = setTimeout(() => {
@@ -197,218 +199,387 @@ const Billboard = React.memo(() => {
   // Show loading state while trending data is being fetched
   if (isTrendingLoading || !mainMovie) {
     return (
-      <div className="relative h-[56.25vw] bg-zinc-900 flex items-center justify-center">
+      <div className="relative h-[56.25vw] md:h-[56.25vw] bg-zinc-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-[56.25vw] overflow-hidden">
-      {/* Main Backdrop - with smooth transitions */}
-      <div
-        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-700 ease-in-out transform ${showTrailer && trailerUrl && trailersEnabled ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-          }`}
-        style={{
-          backgroundImage: `url(${mainMovie?.backdropUrl || mainMovie?.thumbnailUrl})`,
-          backgroundPosition: 'center top',
-        }}
-      >
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-      </div>
-
-      {/* YouTube Trailer */}
-      {trailerUrl && trailersEnabled && (
-        <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${showTrailer ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
-          <iframe
-            src={trailerUrl}
-            className="w-full h-full object-cover brightness-[60%]"
-            allow="autoplay; encrypted-media"
-            title={`${mainMovie?.title} Trailer`}
-            style={{ pointerEvents: 'none' }}
-          />
+    <>
+      {/* Desktop/Tablet View - Landscape Billboard */}
+      <div className="hidden md:block relative h-[56.25vw] overflow-hidden">
+        {/* Main Backdrop - with smooth transitions */}
+        <div
+          className={`absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-700 ease-in-out transform ${showTrailer && trailerUrl && trailersEnabled ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+            }`}
+          style={{
+            backgroundImage: `url(${mainMovie?.backdropUrl || mainMovie?.thumbnailUrl})`,
+            backgroundPosition: 'center top',
+          }}
+        >
+          {/* Dark gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </div>
-      )}
 
-      {/* Content - Left side */}
-      <div className="absolute inset-0 flex flex-col justify-center ml-4 md:ml-16 z-20">
-        <div className={`max-w-lg lg:max-w-2xl transition-all duration-600 ease-out transform ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-          }`}>
-          {/* Netflix-style badge */}
-          <div className="flex items-center mb-4">
-            <div className="flex items-center space-x-2 text-white/90">
-              <span className="text-red-600 font-bold text-sm tracking-wider">STREAMBOX</span>
-              <span className="text-xs">•</span>
-              <span className="text-xs font-semibold">
-                {mainMovie?.type === 'tv' ? 'SERIES' : 'MOVIE'}
-              </span>
-              <span className="text-xs">•</span>
-              <span className="text-xs">{mainMovie?.year || '2024'}</span>
-            </div>
+        {/* YouTube Trailer */}
+        {trailerUrl && trailersEnabled && (
+          <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${showTrailer ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}>
+            <iframe
+              src={trailerUrl}
+              className="w-full h-full object-cover brightness-[60%]"
+              allow="autoplay; encrypted-media"
+              title={`${mainMovie?.title} Trailer`}
+              style={{ pointerEvents: 'none' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           </div>
+        )}
 
-          {/* Title */}
-          <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-bold mb-4 tracking-wider">
-            {mainMovie?.title}
-          </h1>
-
-          {/* Rating and Genre */}
-          <div className="flex items-center mb-4 space-x-4">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-yellow-400 text-sm ${i < Math.floor((mainMovie?.rating || 0) / 2) ? 'opacity-100' : 'opacity-30'
-                    }`}
-                >
-                  ★
+        {/* Content - Left side */}
+        <div className="absolute inset-0 flex flex-col justify-center ml-16 z-20">
+          <div className={`max-w-lg lg:max-w-2xl transition-all duration-600 ease-out transform ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+            }`}>
+            {/* Netflix-style badge */}
+            <div className="flex items-center mb-4">
+              <div className="flex items-center space-x-2 text-white/90">
+                <span className="text-red-600 font-bold text-sm tracking-wider">STREAMBOX</span>
+                <span className="text-xs">•</span>
+                <span className="text-xs font-semibold">
+                  {mainMovie?.type === 'tv' ? 'SERIES' : 'MOVIE'}
                 </span>
-              ))}
-              <span className="text-white/80 ml-2 text-sm font-medium">
-                {((mainMovie?.rating || 0) / 2).toFixed(1)}
-              </span>
+                <span className="text-xs">•</span>
+                <span className="text-xs">{mainMovie?.year || '2024'}</span>
+              </div>
             </div>
-            <span className="text-white/60 text-sm">{mainMovie?.genre}</span>
-            <span className="text-white/60 text-sm">{mainMovie?.duration}</span>
-          </div>
 
-          {/* Description */}
-          <p className="text-white/90 text-sm md:text-base lg:text-lg mb-8 leading-relaxed max-w-md lg:max-w-lg line-clamp-3">
-            {mainMovie?.description}
-          </p>
+            {/* Title */}
+            <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-bold mb-4 tracking-wider">
+              {mainMovie?.title}
+            </h1>
 
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-4">
-            <PlayButton movieId={mainMovie?.id} />
+            {/* Rating and Genre */}
+            <div className="flex items-center mb-4 space-x-4">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <span
+                    key={i}
+                    className={`text-yellow-400 text-sm ${i < Math.floor((mainMovie?.rating || 0) / 2) ? 'opacity-100' : 'opacity-30'
+                      }`}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span className="text-white/80 ml-2 text-sm font-medium">
+                  {((mainMovie?.rating || 0) / 2).toFixed(1)}
+                </span>
+              </div>
+              <span className="text-white/60 text-sm">{mainMovie?.genre}</span>
+              <span className="text-white/60 text-sm">{mainMovie?.duration}</span>
+            </div>
 
-            <button
-              onClick={handleOpenModal}
-              className="
-                bg-white/20
-                backdrop-blur-sm
-                text-white
-                rounded-md
-                py-2 md:py-3
-                px-4 md:px-6
-                text-sm lg:text-base
-                font-semibold
-                flex
-                items-center
-                hover:bg-white/30
-                transition-all
-                duration-200
-                border border-white/30
-                hover:border-white/50
-              "
-            >
-              <InformationCircleIcon className="w-5 h-5 md:w-6 md:h-6 mr-2" />
-              More Info
-            </button>
+            {/* Description */}
+            <p className="text-white/90 text-sm md:text-base lg:text-lg mb-8 leading-relaxed max-w-md lg:max-w-lg line-clamp-3">
+              {mainMovie?.description}
+            </p>
 
-            <WatchlistButton movieId={mainMovie?.id} movieTitle={mainMovie?.title} />
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-4">
+              <PlayButton movieId={mainMovie?.id} />
+
+              <button
+                onClick={handleOpenModal}
+                className="
+                  bg-white/20
+                  backdrop-blur-sm
+                  text-white
+                  rounded-md
+                  py-2 md:py-3
+                  px-4 md:px-6
+                  text-sm lg:text-base
+                  font-semibold
+                  flex
+                  items-center
+                  hover:bg-white/30
+                  transition-all
+                  duration-200
+                  border border-white/30
+                  hover:border-white/50
+                "
+              >
+                <InformationCircleIcon className="w-5 h-5 md:w-6 md:h-6 mr-2" />
+                More Info
+              </button>
+
+              <WatchlistButton movieId={mainMovie?.id} movieTitle={mainMovie?.title} />
+            </div>
           </div>
         </div>
+
+        {/* Up Next Thumbnails - Bottom Right */}
+        {upNextMovies.length > 0 && (
+          <div className={`absolute bottom-80 right-8 z-30 transition-all duration-500 ease-out transform ${isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
+            }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white/80 tracking-wide">UP NEXT</h3>
+
+              {/* Trailer Toggle Button */}
+              <button
+                onClick={toggleTrailers}
+                className={`ml-4 flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${trailersEnabled
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-white/20 hover:bg-white/30 text-white/80 hover:text-white'
+                  }`}
+                title={trailersEnabled ? 'Disable trailers' : 'Enable trailers'}
+              >
+                <FilmIcon className="w-3 h-3 mr-1" />
+                {trailersEnabled ? 'Trailers On' : 'Trailers Off'}
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {/* Previous Arrow */}
+              <button
+                onClick={handlePrevious}
+                className="p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200"
+              >
+                <ChevronLeftIcon className="w-4 h-4 text-white" />
+              </button>
+
+              {/* Thumbnails - Only show next 3 movies */}
+              <div className="flex space-x-3">
+                {upNextMovies.map((movie, index) => (
+                  <div
+                    key={`${movie.id}-${index}`}
+                    className="flex flex-col items-center"
+                  >
+                    <button
+                      onClick={() => handleThumbnailClick(index)}
+                      className="relative group transition-all duration-200 hover:scale-105 hover:ring-1 hover:ring-white/50"
+                    >
+                      <div className="w-28 h-16 rounded-md overflow-hidden shadow-lg">
+                        <img
+                          src={movie.backdropUrl || movie.thumbnailUrl}
+                          alt={movie.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Play icon overlay */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center">
+                          <PlayIcon className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Movie title below thumbnail */}
+                    <div className="mt-2 px-1 max-w-28">
+                      <p className="text-white text-xs font-medium text-center leading-tight line-clamp-2">
+                        {movie.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Next Arrow */}
+              <button
+                onClick={handleNext}
+                className="p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200"
+              >
+                <ChevronRightIcon className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Progress indicators - Shows position in the entire queue */}
+            <div className={`flex justify-center mt-4 space-x-1 transition-all duration-500 ease-out ${isTransitioning ? 'opacity-50' : 'opacity-100'
+              }`}>
+              {movieQueue.slice(0, Math.min(8, movieQueue.length)).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    clearAutoRotation();
+                    setCurrentIndex(index);
+                    setShowTrailer(false);
+                  }}
+                  className={`w-6 h-0.5 rounded-full transition-colors duration-200 hover:bg-white/60 ${index === currentIndex ? 'bg-white' : 'bg-white/30'
+                    }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-900 to-transparent z-10" />
       </div>
 
-      {/* Up Next Thumbnails - Bottom Right */}
-      {upNextMovies.length > 0 && (
-        <div className={`absolute bottom-80 right-8 z-30 transition-all duration-500 ease-out transform ${isTransitioning ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
-          }`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-white/80 tracking-wide">UP NEXT</h3>
+      {/* Mobile View - Portrait Poster with Taller Layout */}
+      <div className="md:hidden relative h-[140vh] max-h-[900px] overflow-hidden bg-zinc-900">
+        {/* Portrait Poster Background */}
+        <div className="absolute inset-0 w-full h-full">
+          <img
+            src={mainMovie?.thumbnailUrl || mainMovie?.backdropUrl}
+            alt={mainMovie?.title}
+            className="w-full h-full object-cover object-top"
+          />
+          {/* Gradient overlays for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-zinc-900" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
+        </div>
 
-            {/* Trailer Toggle Button */}
-            <button
-              onClick={toggleTrailers}
-              className={`ml-4 flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${trailersEnabled
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-white/20 hover:bg-white/30 text-white/80 hover:text-white'
-                }`}
-              title={trailersEnabled ? 'Disable trailers' : 'Enable trailers'}
-            >
-              <FilmIcon className="w-3 h-3 mr-1" />
-              {trailersEnabled ? 'Trailers On' : 'Trailers Off'}
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {/* Previous Arrow */}
-            <button
-              onClick={handlePrevious}
-              className="p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200"
-            >
-              <ChevronLeftIcon className="w-4 h-4 text-white" />
-            </button>
-
-            {/* Thumbnails - Only show next 3 movies */}
-            <div className="flex space-x-3">
-              {upNextMovies.map((movie, index) => (
-                <div
-                  key={`${movie.id}-${index}`}
-                  className="flex flex-col items-center"
-                >
-                  <button
-                    onClick={() => handleThumbnailClick(index)}
-                    className="relative group transition-all duration-200 hover:scale-105 hover:ring-1 hover:ring-white/50"
-                  >
-                    <div className="w-24 h-14 md:w-28 md:h-16 rounded-md overflow-hidden shadow-lg">
-                      <img
-                        src={movie.backdropUrl || movie.thumbnailUrl}
-                        alt={movie.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Play icon overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center">
-                        <PlayIcon className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Movie title below thumbnail */}
-                  <div className="mt-2 px-1 max-w-24 md:max-w-28">
-                    <p className="text-white text-xs font-medium text-center leading-tight line-clamp-2">
-                      {movie.title}
-                    </p>
-                  </div>
-                </div>
-              ))}
+        {/* Content - Bottom positioned to always show buttons */}
+        <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-6">
+          <div className={`transition-all duration-600 ease-out transform ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+            }`}>
+            {/* Netflix-style badge */}
+            <div className="flex items-center mb-3">
+              <div className="flex items-center space-x-2 text-white/90">
+                <span className="text-red-600 font-bold text-xs tracking-wider">STREAMBOX</span>
+                <span className="text-xs">•</span>
+                <span className="text-xs font-semibold">
+                  {mainMovie?.type === 'tv' ? 'SERIES' : 'MOVIE'}
+                </span>
+                <span className="text-xs">•</span>
+                <span className="text-xs">{mainMovie?.year || '2024'}</span>
+              </div>
             </div>
 
-            {/* Next Arrow */}
-            <button
-              onClick={handleNext}
-              className="p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200"
-            >
-              <ChevronRightIcon className="w-4 h-4 text-white" />
-            </button>
-          </div>
+            {/* Title */}
+            <h1 className="text-white text-3xl font-bold mb-3 tracking-wide leading-tight">
+              {mainMovie?.title}
+            </h1>
 
-          {/* Progress indicators - Shows position in the entire queue */}
-          <div className={`flex justify-center mt-4 space-x-1 transition-all duration-500 ease-out ${isTransitioning ? 'opacity-50' : 'opacity-100'
-            }`}>
-            {movieQueue.slice(0, Math.min(8, movieQueue.length)).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  clearAutoRotation();
-                  setCurrentIndex(index);
-                  setShowTrailer(false);
+            {/* Rating and Genre */}
+            <div className="flex items-center mb-3 space-x-3 flex-wrap">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <span
+                    key={i}
+                    className={`text-yellow-400 text-xs ${i < Math.floor((mainMovie?.rating || 0) / 2) ? 'opacity-100' : 'opacity-30'
+                      }`}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span className="text-white/80 ml-1.5 text-xs font-medium">
+                  {((mainMovie?.rating || 0) / 2).toFixed(1)}
+                </span>
+              </div>
+              <span className="text-white/60 text-xs">{mainMovie?.genre}</span>
+              {mainMovie?.duration && (
+                <span className="text-white/60 text-xs">{mainMovie.duration}</span>
+              )}
+            </div>
+
+            {/* Description - Collapsible with 2 lines max */}
+            <div className="mb-4">
+              <p
+                className="text-white/90 text-sm leading-relaxed"
+                style={{
+                  display: descriptionExpanded ? 'block' : '-webkit-box',
+                  WebkitLineClamp: descriptionExpanded ? 'unset' : 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: descriptionExpanded ? 'visible' : 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
-                className={`w-6 h-0.5 rounded-full transition-colors duration-200 hover:bg-white/60 ${index === currentIndex ? 'bg-white' : 'bg-white/30'
-                  }`}
-              />
-            ))}
+              >
+                {mainMovie?.description}
+              </p>
+              {mainMovie?.description && mainMovie.description.length > 100 && (
+                <button
+                  onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                  className="text-white/70 hover:text-white text-xs font-medium mt-1 flex items-center transition-colors"
+                >
+                  {descriptionExpanded ? (
+                    <>
+                      <span>Show less</span>
+                      <ChevronUpIcon className="w-3 h-3 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      <span>More</span>
+                      <ChevronDownIcon className="w-3 h-3 ml-1" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Action Buttons - Always visible, side by side */}
+            <div className="flex items-center space-x-2">
+              <PlayButton movieId={mainMovie?.id} />
+
+              <button
+                onClick={handleOpenModal}
+                className="
+                  bg-white/20
+                  backdrop-blur-sm
+                  text-white
+                  rounded-md
+                  py-1 md:py-2
+                  px-2 md:px-4
+                  w-auto
+                  text-xs lg:text-lg
+                  font-semibold
+                  flex
+                  flex-row
+                  items-center
+                  hover:bg-white/30
+                  transition
+                  border border-white/30
+                  hover:border-white/50
+                "
+              >
+                <InformationCircleIcon className="w-4 md:w-7 text-white mr-1" />
+                Info
+              </button>
+
+              <WatchlistButton movieId={mainMovie?.id} movieTitle={mainMovie?.title} />
+            </div>
+
+            {/* Navigation and Progress */}
+            <div className="mt-6 flex items-center justify-between">
+              {/* Previous/Next buttons */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePrevious}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
+                >
+                  <ChevronLeftIcon className="w-5 h-5 text-white" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
+                >
+                  <ChevronRightIcon className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              {/* Progress indicators */}
+              <div className="flex space-x-1.5">
+                {movieQueue.slice(0, Math.min(5, movieQueue.length)).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      clearAutoRotation();
+                      setCurrentIndex(index);
+                      setShowTrailer(false);
+                      setDescriptionExpanded(false);
+                    }}
+                    className={`w-8 h-1 rounded-full transition-colors duration-200 ${index === currentIndex ? 'bg-white' : 'bg-white/30'
+                      }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-900 to-transparent z-10" />
-    </div>
+        {/* Bottom fade - stronger */}
+        <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-zinc-900 via-zinc-900/80 to-transparent z-10 pointer-events-none" />
+      </div>
+    </>
   );
 });
 

@@ -212,14 +212,14 @@ const Navbar = () => {
         <div className="flex flex-row ml-auto gap-7 items-center">
           {/* Search Bar */}
           {showSearch ? (
-            <div ref={searchRef} className="relative">
+            <div ref={searchRef} className="fixed inset-x-0 top-20 px-4 md:relative md:inset-auto md:top-auto md:px-0 z-50">
               <form onSubmit={handleSearch} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={handleSearchChange}
                   placeholder={isAnimePage ? 'Search anime...' : 'Search movies & shows...'}
-                  className="px-4 py-2 bg-black bg-opacity-70 text-white border border-gray-600 rounded-md focus:outline-none focus:border-white transition w-48 md:w-64"
+                  className="flex-1 md:flex-initial px-4 py-2 bg-black bg-opacity-70 text-white border border-gray-600 rounded-md focus:outline-none focus:border-white transition md:w-64"
                   autoFocus
                 />
                 <button
@@ -233,7 +233,7 @@ const Navbar = () => {
 
               {/* Search Suggestions Dropdown */}
               {showSuggestions && searchSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-12 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md shadow-xl max-h-96 overflow-y-auto z-50"
+                <div className="absolute top-full left-4 right-4 md:left-0 md:right-0 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md shadow-xl max-h-96 overflow-y-auto"
                   style={{ scrollbarWidth: 'thin', scrollbarColor: '#3f3f46 transparent' }}
                 >
                   {searchSuggestions.map((item) => {
@@ -284,14 +284,14 @@ const Navbar = () => {
 
               {/* Loading indicator */}
               {isSearching && (
-                <div className="absolute top-full left-0 right-12 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md p-4 text-center">
+                <div className="absolute top-full left-4 right-4 md:left-0 md:right-0 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md p-4 text-center">
                   <p className="text-gray-400 text-sm">Searching...</p>
                 </div>
               )}
 
               {/* No results */}
               {showSuggestions && !isSearching && searchSuggestions.length === 0 && searchQuery.trim() && (
-                <div className="absolute top-full left-0 right-12 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md p-4 text-center">
+                <div className="absolute top-full left-4 right-4 md:left-0 md:right-0 mt-2 bg-black bg-opacity-95 border border-gray-700 rounded-md p-4 text-center">
                   <p className="text-gray-400 text-sm">No results found</p>
                 </div>
               )}
