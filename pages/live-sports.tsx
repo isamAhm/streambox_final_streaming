@@ -1007,6 +1007,7 @@ const LiveSports = () => {
                             className="w-full h-full"
                             allowFullScreen
                             allow="encrypted-media; autoplay; fullscreen"
+                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
                             referrerPolicy={serverGroup === 'streamed' ? 'origin' : undefined}
                             title={selectedGame.title}
                         />
